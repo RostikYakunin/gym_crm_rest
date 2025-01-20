@@ -1,0 +1,62 @@
+[
+  {
+    "trainee":  {
+      "id": 1
+    },
+    "trainer": {
+      "id": 6
+    },
+    "trainingName": "Resistance",
+    "trainingType": "RESISTANCE",
+    "trainingDate": "2024-01-01T15:30:00",
+    "trainingDuration": "PT1H"
+  },
+  {
+    "trainee":  {
+      "id": 2
+    },
+    "trainer": {
+      "id": 7
+    },
+    "trainingName": "Fitness",
+    "trainingType": "FITNESS",
+    "trainingDate": "2024-01-02T15:30:00",
+    "trainingDuration": "PT1H30M"
+  },
+  {
+    "trainee":  {
+      "id": 3
+    },
+    "trainer": {
+      "id": 8
+    },
+    "trainingName": "Yoga",
+    "trainingType": "YOGA",
+    "trainingDate": "2024-01-03T15:30:00",
+    "trainingDuration": "PT45M"
+  },
+  {
+    "trainee":  {
+      "id": 4
+    },
+    "trainer": {
+      "id": 9
+    },
+    "trainingName": "Zumba",
+    "trainingType": "ZUMBA",
+    "trainingDate": "2024-01-04T15:30:00",
+    "trainingDuration": "PT1H15M"
+  },
+  {
+    "trainee":  {
+      "id": 5
+    },
+    "trainer": {
+      "id": 10
+    },
+    "trainingName": "Stretching",
+    "trainingType": "STRETCHING",
+    "trainingDate": "2024-01-05T15:30:00",
+    "trainingDuration": "PT1H"
+  }
+]

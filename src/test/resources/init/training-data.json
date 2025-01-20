@@ -1,0 +1,107 @@
+[
+  {
+    "trainee": {
+      "id": 1,
+      "firstName": "John",
+      "lastName": "Doe",
+      "dateOfBirth": "1990-01-15",
+      "password": "234fjkshdw",
+      "address": "123 Main Street, Springfield"
+    },
+    "trainer": {
+      "id": 6,
+      "firstName": "Alice",
+      "lastName": "Johnson",
+      "password": "sj23jkshdw",
+      "specialization": "FITNESS"
+    },
+    "trainingName": "Resistance",
+    "trainingType": "RESISTANCE",
+    "trainingDate": "2024-01-01T15:30:00",
+    "trainingDuration": "PT1H"
+  },
+  {
+    "trainee": {
+      "id": 2,
+      "firstName": "Jane",
+      "lastName": "Smith",
+      "dateOfBirth": "1992-05-20",
+      "password": "4567jkshdw",
+      "address": "456 Elm Street, Shelbyville"
+    },
+    "trainer": {
+      "id": 7,
+      "firstName": "Bob",
+      "lastName": "Miller",
+      "password": "sjdf36shdw",
+      "specialization": "YOGA"
+    },
+    "trainingName": "Fitness",
+    "trainingType": "FITNESS",
+    "trainingDate": "2024-01-02T15:30:00",
+    "trainingDuration": "PT1H30M"
+  },
+  {
+    "trainee": {
+      "id": 3,
+      "firstName": "Michael",
+      "lastName": "Brown",
+      "dateOfBirth": "1988-03-10",
+      "password": "sj234kshdw",
+      "address": "789 Oak Street, Capital City"
+    },
+    "trainer": {
+      "id": 8,
+      "firstName": "Laura",
+      "lastName": "Taylor",
+      "password": "sjdfjkshdw",
+      "specialization": "ZUMBA"
+    },
+    "trainingName": "Yoga",
+    "trainingType": "YOGA",
+    "trainingDate": "2024-01-03T15:30:00",
+    "trainingDuration": "PT45M"
+  },
+  {
+    "trainee": {
+      "id": 4,
+      "firstName": "Emily",
+      "lastName": "Davis",
+      "dateOfBirth": "1995-07-25",
+      "password": "sj456kshdw",
+      "address": "321 Pine Street, Ogdenville"
+    },
+    "trainer": {
+      "id": 9,
+      "firstName": "David",
+      "lastName": "Anderson",
+      "password": "sjd123shdw",
+      "specialization": "STRETCHING"
+    },
+    "trainingName": "Zumba",
+    "trainingType": "ZUMBA",
+    "trainingDate": "2024-01-04T15:30:00",
+    "trainingDuration": "PT1H15M"
+  },
+  {
+    "trainee": {
+      "id": 5,
+      "firstName": "Chris",
+      "lastName": "Wilson",
+      "dateOfBirth": "1993-11-12",
+      "password": "sjdfjk345w",
+      "address": "654 Birch Street, North Haverbrook"
+    },
+    "trainer": {
+      "id": 10,
+      "firstName": "Sarah",
+      "lastName": "Thomas",
+      "password": "sjdfjk567w",
+      "specialization": "RESISTANCE"
+    },
+    "trainingName": "Stretching",
+    "trainingType": "STRETCHING",
+    "trainingDate": "2024-01-05T15:30:00",
+    "trainingDuration": "PT1H"
+  }
+]

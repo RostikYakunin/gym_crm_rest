@@ -1,0 +1,71 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group 'com.crm'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
+}
+
+dependencies {
+    // Spring Core
+    implementation 'org.springframework:spring-context:6.0.12'
+    implementation 'org.springframework:spring-orm:6.0.12'
+    implementation 'org.springframework:spring-jdbc:6.0.12'
+    implementation 'org.springframework:spring-tx:6.0.12'
+
+    // JSON mapper + date mapper
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.15.2'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2'
+
+    //Java EE annotations
+    implementation 'jakarta.annotation:jakarta.annotation-api:2.1.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.34'
+    annotationProcessor 'org.projectlombok:lombok:1.18.34'
+
+    // Logger
+    implementation 'org.slf4j:slf4j-api:1.7.32'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+
+    // Common libraries
+    implementation 'org.apache.commons:commons-text:1.10.0'
+    implementation 'org.mindrot:jbcrypt:0.4'
+
+    // Dto mapper - Mapstruct
+    implementation 'org.mapstruct:mapstruct:1.5.5.Final'
+    annotationProcessor 'org.mapstruct:mapstruct-processor:1.5.5.Final'
+
+    // JPA and Hibernate
+    implementation 'javax.persistence:javax.persistence-api:2.2'
+    implementation 'org.hibernate:hibernate-core:6.6.4.Final'
+    implementation 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
+    annotationProcessor 'org.hibernate.validator:hibernate-validator:8.0.0.Final'
+
+    // DB
+    implementation 'org.postgresql:postgresql:42.6.0'
+
+    // Testing
+    testImplementation 'org.springframework:spring-test:6.0.12'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.5.0'
+    testImplementation 'com.h2database:h2:2.2.224'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+application {
+    mainClass = 'com.crm_module.GymSpringApp'
+}
