@@ -27,7 +27,7 @@ public class TrainerRepoImpl extends AbstractUserRepo<Trainer> implements Traine
     public List<Training> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeUserName, TrainingType trainingType) {
         var jpql = """
                 SELECT t FROM Training t
-                WHERE t.trainer.username = :trainerUsername
+                WHERE t.trainer.userName = :trainerUsername
                 AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
                 AND (:toDate IS NULL OR t.trainingDate <= :toDate)
                 AND (:traineeName IS NULL OR t.trainee.firstName LIKE CONCAT('%', :traineeName, '%') OR t.trainee.lastName LIKE CONCAT('%', :traineeName, '%'))
@@ -50,7 +50,7 @@ public class TrainerRepoImpl extends AbstractUserRepo<Trainer> implements Traine
                  SELECT tr FROM Trainer tr
                  WHERE tr.id NOT IN (
                    SELECT t.trainer.id FROM Training t
-                   WHERE t.trainee.username = :traineeUsername
+                   WHERE t.trainee.userName = :traineeUsername
                 )
                 """;
 

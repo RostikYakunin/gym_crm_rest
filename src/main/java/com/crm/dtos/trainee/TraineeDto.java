@@ -1,5 +1,6 @@
-package com.crm.dtos;
+package com.crm.dtos.trainee;
 
+import com.crm.dtos.UserDto;
 import com.crm.repositories.entities.Training;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;

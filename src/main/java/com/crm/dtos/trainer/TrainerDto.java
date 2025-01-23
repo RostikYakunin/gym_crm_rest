@@ -1,5 +1,6 @@
-package com.crm.dtos;
+package com.crm.dtos.trainer;
 
+import com.crm.dtos.UserDto;
 import com.crm.models.TrainingType;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;

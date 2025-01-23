@@ -1,4 +1,4 @@
-package com.crm.dtos;
+package com.crm.dtos.training;
 
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
@@ -22,8 +22,6 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @Builder
 public class TrainingDto {
-    private Long id;
-
     @NotNull(message = "Trainee is mandatory")
     private Trainee trainee;
 

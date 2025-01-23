@@ -24,7 +24,7 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
     @Override
     public Optional<T> findByUserName(String username) {
         log.debug("Start searching entity by username... ");
-        var query = "SELECT u FROM " + getEntityClassName() + " u WHERE u.username = :username";
+        var query = "SELECT u FROM " + getEntityClassName() + " u WHERE u.userName = :username";
         var user = (T) entityManager.createQuery(query)
                 .setParameter("username", username)
                 .getSingleResult();
@@ -67,11 +67,17 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
     @Override
     public boolean isUserNameExists(String username) {
         log.debug("Start searching entity with username= " + username);
-        var query = "SELECT COUNT(e) FROM " + getEntityClassName() + " e WHERE e.username = :username";
+        var query = "SELECT COUNT(e) FROM " + getEntityClassName() + " e WHERE e.userName = :username";
         var count = (Long) entityManager.createQuery(query)
                 .setParameter("username", username)
                 .getSingleResult();
         return count > 0;
+    }
+
+    @Override
+    public boolean existsByFirstNameAndLastName(String firstName, String lastName) {
+        var query = "SELECT COUNT(u) > 0 FROM User u WHERE u.firstName = :firstName AND u.lastName = :lastName";
+        return (boolean) entityManager.createQuery(query).getSingleResult();
     }
 
     protected abstract Class<T> getEntityClass();

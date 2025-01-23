@@ -27,7 +27,7 @@ public class TraineeRepoImpl extends AbstractUserRepo<Trainee> implements Traine
     public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
         var jpql = """
                 SELECT t FROM Training t
-                WHERE t.trainee.username = :traineeUsername
+                WHERE t.trainee.userName = :traineeUsername
                 AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
                 AND (:toDate IS NULL OR t.trainingDate <= :toDate)
                 AND (:trainerName IS NULL OR t.trainer.firstName LIKE CONCAT('%', :trainerName, '%') OR t.trainer.lastName LIKE CONCAT('%', :trainerName, '%'))

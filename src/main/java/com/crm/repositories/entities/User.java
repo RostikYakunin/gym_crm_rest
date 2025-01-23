@@ -19,14 +19,14 @@ public abstract class User {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "first_name", nullable = false, length = 50)
+    @Column(name = "first_name", nullable = false, length = 100)
     private String firstName;
 
-    @Column(name = "last_name", nullable = false, length = 50)
+    @Column(name = "last_name", nullable = false, length = 100)
     private String lastName;
 
-    @Column(name = "username", unique = true, nullable = false, length = 101)
-    private String username;
+    @Column(name = "username", unique = true, nullable = false)
+    private String userName;
 
     @Column(name = "password", nullable = false)
     private String password;

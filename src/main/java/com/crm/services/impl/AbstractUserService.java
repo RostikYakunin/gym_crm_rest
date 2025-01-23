@@ -16,25 +16,37 @@ import java.util.NoSuchElementException;
 public abstract class AbstractUserService<T extends User, R extends UserRepo<T>> implements UserService<T> {
     protected final R repository;
 
+    @Override
     public T findById(long id) {
         log.info("Searching for entity with id={}", id);
         return repository.findById(id).orElse(null);
     }
 
+    @Override
     public T findByUsername(String username) {
         log.info("Searching for entity with username={}", username);
         return repository.findByUserName(username).orElse(null);
     }
 
+    @Override
     public T save(T entity) {
-        log.info("Starting saving entity with first name: {}", entity.getFirstName());
+        log.info("Checking if user already registered in the system.");
+        var isExists = repository.existsByFirstNameAndLastName(
+                entity.getFirstName(),
+                entity.getLastName()
+        );
 
+        if (isExists) {
+            throw new IllegalStateException("User is already registered in the system.");
+        }
+
+        log.info("Starting saving entity with first name: {}", entity.getFirstName());
         var uniqueUsername = UserUtils.generateUniqueUsername(
                 entity,
                 repository::isUserNameExists
         );
 
-        entity.setUsername(uniqueUsername);
+        entity.setUserName(uniqueUsername);
         entity.setPassword(UserUtils.hashPassword(entity.getPassword()));
         entity.setActive(true);
 
@@ -44,6 +56,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         return savedTrainer;
     }
 
+    @Override
     public T update(T entity) {
         var id = entity.getId();
         log.info("Started updating process for entity with id={}", id);
@@ -60,6 +73,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         return updatedEntity;
     }
 
+    @Override
     public boolean changePassword(T entity, String inputtedPassword, String newPassword) {
         var result = UserUtils.matchesPasswordHash(inputtedPassword, entity.getPassword());
         if (!result) {
@@ -75,6 +89,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         return true;
     }
 
+    @Override
     public boolean activateStatus(long id) {
         log.info("Activating status for entity with id={}", id);
 
@@ -88,6 +103,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         return false;
     }
 
+    @Override
     public boolean deactivateStatus(long id) {
         log.info("Deactivating status for entity with id={}", id);
 
@@ -101,6 +117,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         return false;
     }
 
+    @Override
     public boolean isUsernameAndPasswordMatching(String username, String inputtedPassword) {
         return repository.findByUserName(username)
                 .map(user -> UserUtils.matchesPasswordHash(inputtedPassword, user.getPassword()))
