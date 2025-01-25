@@ -29,7 +29,7 @@ public class TrainingDto {
     private Trainer trainer;
 
     @NotBlank(message = "Training name is mandatory")
-    @Size(min = 5, max = 255, message = "Training name must be between 5 and 255 characters")
+    @Size(min = 3, max = 255, message = "Training name must be between 3 and 255 characters")
     private String trainingName;
 
     @NotNull(message = "Training type is mandatory")

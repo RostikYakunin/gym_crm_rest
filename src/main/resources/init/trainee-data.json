@@ -3,35 +3,35 @@
     "firstName": "John",
     "lastName": "Doe",
     "dateOfBirth": "1990-01-15",
-    "password": "234fjkshdw",
+    "password": "234fjKshdw",
     "address": "123 Main Street, Springfield"
   },
   {
     "firstName": "Jane",
     "lastName": "Smith",
     "dateOfBirth": "1992-05-20",
-    "password": "4567jkshdw",
+    "password": "4567jKshdw",
     "address": "456 Elm Street, Shelbyville"
   },
   {
     "firstName": "Michael",
     "lastName": "Brown",
     "dateOfBirth": "1988-03-10",
-    "password": "sj234kshdw",
+    "password": "sj234ksKdw",
     "address": "789 Oak Street, Capital City"
   },
   {
     "firstName": "Emily",
     "lastName": "Davis",
     "dateOfBirth": "1995-07-25",
-    "password": "sj456kshdw",
+    "password": "sj456Kshdw",
     "address": "321 Pine Street, Ogdenville"
   },
   {
     "firstName": "Chris",
     "lastName": "Wilson",
     "dateOfBirth": "1993-11-12",
-    "password": "sjdfjk345w",
+    "password": "sjdfKk345w",
     "address": "654 Birch Street, North Haverbrook"
   }
 ]

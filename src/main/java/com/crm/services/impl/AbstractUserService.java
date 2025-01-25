@@ -8,8 +8,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.NoSuchElementException;
-
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -58,17 +56,9 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
 
     @Override
     public T update(T entity) {
-        var id = entity.getId();
-        log.info("Started updating process for entity with id={}", id);
-
-        if (!repository.isExistsById(id)) {
-            log.error("Entity with id={} not found, update failed", id);
-            throw new NoSuchElementException("Entity with id=" + id + " not found");
-        }
-
         log.info("Starting updating entity...");
         var updatedEntity = repository.update(entity);
-        log.info("Entity with id={} was successfully updated", id);
+        log.info("Entity with id={} was successfully updated", updatedEntity.getId());
 
         return updatedEntity;
     }
@@ -85,7 +75,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         entity.setPassword(UserUtils.hashPassword(newPassword));
         repository.update(entity);
 
-        log.info("Password change successfully completed");
+        log.info("Password changing successfully completed");
         return true;
     }
 
@@ -119,6 +109,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
 
     @Override
     public boolean isUsernameAndPasswordMatching(String username, String inputtedPassword) {
+        log.info("Started verification for user name and password matching...");
         return repository.findByUserName(username)
                 .map(user -> UserUtils.matchesPasswordHash(inputtedPassword, user.getPassword()))
                 .orElse(false);

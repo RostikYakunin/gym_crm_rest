@@ -4,6 +4,7 @@ import com.crm.models.TrainingType;
 import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
@@ -21,6 +22,14 @@ public class TraineeRepoImpl extends AbstractUserRepo<Trainee> implements Traine
     @Override
     protected String getEntityClassName() {
         return Trainee.class.getSimpleName();
+    }
+
+    @Override
+    @Transactional
+    public void delete(Trainee trainee) {
+        log.debug("Start deleting entity...");
+        trainee = entityManager.merge(entityManager.find(Trainee.class, trainee.getId()));
+        entityManager.remove(trainee);
     }
 
     @Override

@@ -24,6 +24,15 @@ public class TrainerRepoImpl extends AbstractUserRepo<Trainer> implements Traine
     }
 
     @Override
+    public void delete(Trainer trainer) {
+        log.debug("Start deleting entity... ");
+        trainer.setTrainings(null);
+
+        trainer = entityManager.merge(trainer);
+        entityManager.remove(trainer);
+    }
+
+    @Override
     public List<Training> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeUserName, TrainingType trainingType) {
         var jpql = """
                 SELECT t FROM Training t
@@ -49,7 +58,8 @@ public class TrainerRepoImpl extends AbstractUserRepo<Trainer> implements Traine
         String jpql = """
                  SELECT tr FROM Trainer tr
                  WHERE tr.id NOT IN (
-                   SELECT t.trainer.id FROM Training t
+                   SELECT t.trainer.id
+                   FROM Training t
                    WHERE t.trainee.userName = :traineeUsername
                 )
                 """;

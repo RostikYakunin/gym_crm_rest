@@ -45,16 +45,6 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
     }
 
     @Override
-    public void delete(T entity) {
-        log.debug("Start deleting entity... ");
-        if (!entityManager.contains(entity)) {
-            entity = entityManager.merge(entity);
-        }
-
-        entityManager.remove(entity);
-    }
-
-    @Override
     public boolean isExistsById(long id) {
         log.debug("Start searching entity with id= " + id);
         var query = "SELECT COUNT(e) FROM " + getEntityClassName() + " e WHERE e.id = :id";
@@ -77,7 +67,10 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
     @Override
     public boolean existsByFirstNameAndLastName(String firstName, String lastName) {
         var query = "SELECT COUNT(u) > 0 FROM User u WHERE u.firstName = :firstName AND u.lastName = :lastName";
-        return (boolean) entityManager.createQuery(query).getSingleResult();
+        return (boolean) entityManager.createQuery(query)
+                .setParameter("firstName", firstName)
+                .setParameter("lastName", lastName)
+                .getSingleResult();
     }
 
     protected abstract Class<T> getEntityClass();

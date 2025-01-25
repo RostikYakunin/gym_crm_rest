@@ -23,7 +23,7 @@ public class TrainingServiceImpl implements TrainingService {
 
     @Override
     public Training save(Training training) {
-        log.info("Saving training: {}", training);
+        log.info("Started saving training");
         return trainingRepo.save(training);
     }
 }

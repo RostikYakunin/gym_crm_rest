@@ -8,7 +8,9 @@ import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -84,7 +86,7 @@ public class GlobalExceptionHandler {
 
         log.error("[{}] Unexpected error: {}", transactionId, ex.getMessage(), ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An unexpected error occurred. Please contact support.");
+                .body("An unexpected error occurred. Please contact support.\n" + ex.getCause());
     }
 
     @ExceptionHandler(IllegalStateException.class)
@@ -92,6 +94,24 @@ public class GlobalExceptionHandler {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] Registration conflict: {}", transactionId, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<String> handleIllegalStateException(HttpRequestMethodNotSupportedException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] This request with these parameters is not supported: {}", transactionId, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    public ResponseEntity<String> handleIllegalStateException(MissingServletRequestParameterException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] Parameters are not correct for this request: {}", transactionId, ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }

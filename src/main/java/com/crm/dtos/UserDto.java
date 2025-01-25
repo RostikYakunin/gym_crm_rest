@@ -25,7 +25,7 @@ public abstract class UserDto {
     @Pattern(regexp = "^[A-Za-z]+$", message = "Last name must contain only letters")
     private String lastName;
 
-    private String username;
+    private String userName;
 
     @NotBlank(message = "Password is mandatory")
     @Size(min = 4, max = 10, message = "Password must be between 4 and 10 characters")

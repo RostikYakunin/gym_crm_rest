@@ -14,14 +14,14 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TrainingShortView {
-    private String name;
-
+public class TrainingView {
+    private Long id;
+    private Long traineeId;
+    private Long trainerId;
+    private String trainingName;
+    private TrainingType trainingType;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm")
-    private LocalDateTime date;
-    private TrainingType type;
-
+    private LocalDateTime trainingDate;
     @JsonFormat(shape = JsonFormat.Shape.STRING)
-    private Duration duration;
-    private String traineeUserName;
+    private Duration trainingDuration;
 }

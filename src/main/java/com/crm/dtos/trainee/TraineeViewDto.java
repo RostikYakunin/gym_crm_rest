@@ -5,15 +5,17 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
-public class TraineeView {
+public class TraineeViewDto {
     private String firstName;
     private String lastName;
 
@@ -23,7 +25,7 @@ public class TraineeView {
     private Boolean isActive;
 
     @Builder.Default
-    private List<TrainerListView> trainersList = new ArrayList<>();
+    private Set<TrainerListView> trainersList = new HashSet<>();
 
     @Data
     @AllArgsConstructor

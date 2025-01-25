@@ -1,15 +1,18 @@
 package com.crm.dtos.trainer;
 
+import com.crm.dtos.training.TrainingView;
 import com.crm.models.TrainingType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class TrainerView {
     private String firstName;
@@ -18,14 +21,5 @@ public class TrainerView {
     private Boolean isActive;
 
     @Builder.Default
-    private List<TraineeListView> traineesList = new ArrayList<>();
-
-    @Data
-    @AllArgsConstructor
-    @Builder
-    public static class TraineeListView {
-        private String firstName;
-        private String lastName;
-        private String userName;
-    }
+    private Set<TrainingView> trainingViews = new HashSet<>();
 }
