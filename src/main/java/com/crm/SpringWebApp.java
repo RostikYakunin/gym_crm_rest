@@ -16,7 +16,7 @@ public class SpringWebApp {
     @SneakyThrows
     public static void run() {
         var tomcat = createServer();
-        var webContext = createWebContext(tomcat);
+        var webContext = getAppContext(tomcat);
         createServlet(webContext);
 
         log.info("SWAGGER UI DOCs - http://localhost:8080/swagger-ui/index.html");
@@ -33,7 +33,7 @@ public class SpringWebApp {
         return tomcat;
     }
 
-    private static Context createWebContext(Tomcat tomcat) {
+    private static Context getAppContext(Tomcat tomcat) {
         var webContext = tomcat.addContext("", null);
         webContext.addFilterDef(createFilter());
         webContext.addFilterMap(createFilterMap());
@@ -55,12 +55,12 @@ public class SpringWebApp {
     }
 
     private static void createServlet(Context ctx) {
-        var servlet = Tomcat.addServlet(ctx, "myServlet", new DispatcherServlet(createWebContext()));
+        var servlet = Tomcat.addServlet(ctx, "myServlet", new DispatcherServlet(getAppContext()));
         servlet.setLoadOnStartup(1);
         servlet.addMapping("/");
     }
 
-    private static AnnotationConfigWebApplicationContext createWebContext() {
+    private static AnnotationConfigWebApplicationContext getAppContext() {
         var appContext = new AnnotationConfigWebApplicationContext();
         appContext.register(WebConfig.class);
         return appContext;

@@ -1,19 +1,24 @@
 package com.crm;
 
+import com.crm.dtos.trainee.TraineeDto;
+import com.crm.dtos.trainee.TraineeSaveDto;
+import com.crm.dtos.trainee.TraineeViewDto;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+@ExtendWith(MockitoExtension.class)
 public abstract class UnitTestBase {
     // Captors
     @Captor
@@ -21,25 +26,25 @@ public abstract class UnitTestBase {
     @Captor
     protected ArgumentCaptor<Trainer> trainerArgumentCaptor;
     @Captor
-    protected ArgumentCaptor<Training> trainingArgumentCaptor;
-    @Captor
     protected ArgumentCaptor<Long> idArgumentCaptor;
+    @Captor
+    protected ArgumentCaptor<TraineeSaveDto> traineeSaveDtoArgumentCaptor;
 
-    // tested objects
+    // objects for tests
     protected Training testTraining;
     protected Trainee testTrainee;
     protected Trainer testTrainer;
-
-    private AutoCloseable mocks;
+    protected TraineeSaveDto testTraineeSaveDto;
+    protected TraineeDto testTraineeDto;
+    protected TraineeViewDto testTraineeViewDto;
 
     @BeforeEach
-    void initMocks() {
-        mocks = MockitoAnnotations.openMocks(this);
+    void init() {
         testTrainee = Trainee.builder()
                 .id(1L)
                 .firstName("testName")
                 .lastName("testLastName")
-                .username("testName.testLastName")
+                .userName("testName.testLastName")
                 .password("testPassword")
                 .isActive(true)
                 .address("testAddress")
@@ -50,7 +55,7 @@ public abstract class UnitTestBase {
                 .id(1L)
                 .firstName("testName1")
                 .lastName("testLastName1")
-                .username("testName1.testLastName1")
+                .userName("testName1.testLastName1")
                 .password("testPassword1")
                 .isActive(true)
                 .specialization(TrainingType.FITNESS)
@@ -65,13 +70,33 @@ public abstract class UnitTestBase {
                 .trainingName("TestName")
                 .trainingType(TrainingType.FITNESS)
                 .build();
+
+        testTraineeSaveDto = TraineeSaveDto.builder()
+                .firstName("firstName")
+                .lastName("lastName")
+                .password("paSsw2347")
+                .address("address")
+                .build();
+
+        testTraineeDto = TraineeDto.builder()
+                .id(1L)
+                .firstName("testName")
+                .lastName("testLastName")
+                .userName("testName.testLastName")
+                .password("testPassword")
+                .isActive(true)
+                .address("testAddress")
+                .dateOfBirth(LocalDate.parse("1999-10-10"))
+                .build();
     }
 
     @AfterEach
-    void closeMocks() throws Exception {
-        mocks.close();
+    void destroy() {
         testTraining = null;
         testTrainee = null;
         testTrainer = null;
+        testTraineeSaveDto = null;
+        testTraineeViewDto = null;
+        testTraineeDto = null;
     }
 }

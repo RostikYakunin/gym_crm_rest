@@ -1,12 +1,8 @@
 package com.crm.resources;
 
 import com.crm.dtos.UserLoginDto;
-import com.crm.dtos.UserLoginView;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainer.TrainerSaveDto;
-import com.crm.dtos.trainer.TrainerShortView;
-import com.crm.dtos.trainer.TrainerUpdateDto;
-import com.crm.dtos.trainer.TrainerView;
+import com.crm.dtos.trainer.*;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TrainerMapper;
 import com.crm.mappers.TrainingMapper;
@@ -48,37 +44,12 @@ public class TrainerController {
             }
     )
     @PostMapping
-    public ResponseEntity<UserLoginView> registerTrainer(@RequestBody @Valid TrainerSaveDto trainerDto) {
+    public ResponseEntity<TrainerDto> registerTrainer(@RequestBody @Valid TrainerSaveDto trainerDto) {
         var trainer = trainerMapper.toTrainer(trainerDto);
         var savedTrainer = trainerService.save(trainer);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(trainerMapper.toUserLoginView(savedTrainer));
-    }
-
-
-    @Operation(
-            summary = "Trainer login",
-            description = "Authenticates a trainer based on username and password.",
-            parameters = {
-                    @Parameter(name = "username", description = "Trainer`s username", required = true),
-                    @Parameter(name = "password", description = "Trainer`s` password", required = true)
-            },
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Login successful"),
-                    @ApiResponse(responseCode = "400", description = "Bad request"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden"),
-                    @ApiResponse(responseCode = "404", description = "Not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error")
-            }
-    )
-    @GetMapping("/login")
-    public ResponseEntity<String> login(
-            @RequestParam("username") String username,
-            @RequestParam("password") String password
-    ) {
-        var isValid = trainerService.isUsernameAndPasswordMatching(username, password);
-        return isValid ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+                .body(trainerMapper.toDto(savedTrainer));
     }
 
     @Operation(
@@ -95,8 +66,8 @@ public class TrainerController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @PutMapping("/login")
-    public ResponseEntity<Boolean> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
+    @PutMapping("/password")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
         var foundTrainer = trainerService.findByUsername(loginDto.getUserName());
         var result = trainerService.changePassword(
                 foundTrainer,
@@ -104,7 +75,9 @@ public class TrainerController {
                 loginDto.getNewPassword()
         );
 
-        return ResponseEntity.ok(result);
+        return result
+                ? ResponseEntity.ok("Password successfully changed")
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password was not changed");
     }
 
     @Operation(
@@ -145,8 +118,11 @@ public class TrainerController {
     )
     @PutMapping
     public ResponseEntity<TrainerView> updateTrainer(@RequestBody @Valid TrainerUpdateDto updateDto) {
-        var trainer = trainerMapper.toTrainer(updateDto);
-        var updatedTrainer = trainerService.update(trainer);
+        var currentTrainer = trainerService.findByUsername(updateDto.getUserName());
+        var fromDto = trainerMapper.toTrainer(updateDto);
+        trainerMapper.updateTrainer(currentTrainer, fromDto);
+
+        var updatedTrainer = trainerService.update(currentTrainer);
         return updatedTrainer != null
                 ? ResponseEntity.ok(trainerMapper.toTrainerView(updatedTrainer))
                 : ResponseEntity.notFound().build();
@@ -165,8 +141,8 @@ public class TrainerController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @GetMapping("/unassigned")
-    public ResponseEntity<List<TrainerShortView>> getNotAssignedTrainers(@RequestParam String username) {
+    @GetMapping("/unassigned/{username}")
+    public ResponseEntity<List<TrainerShortView>> getNotAssignedTrainers(@PathVariable("username") String username) {
         return ResponseEntity.ok(
                 trainerService.getUnassignedTrainersByTraineeUsername(username)
                         .stream()
@@ -181,7 +157,7 @@ public class TrainerController {
                     @Parameter(name = "username", description = "Trainer`s username", required = true),
                     @Parameter(name = "periodFrom", description = "Criteria - period from."),
                     @Parameter(name = "periodTo", description = "Criteria - period to."),
-                    @Parameter(name = "traineeName", description = "Trainee`s username", required = true)
+                    @Parameter(name = "traineeName", description = "Trainee`s username")
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "List was found successfully"),
@@ -196,7 +172,7 @@ public class TrainerController {
             @RequestParam("username") String username,
             @RequestParam(value = "period-from", required = false) LocalDate periodFrom,
             @RequestParam(value = "period-to", required = false) LocalDate periodTo,
-            @RequestParam(value = "trainee-user-name", required = false) String traineeUserName
+            @RequestParam(value = "trainee-username", required = false) String traineeUserName
     ) {
         return ResponseEntity.ok(
                 trainerService.findTrainerTrainingsByCriteria(
@@ -232,13 +208,13 @@ public class TrainerController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainer not found");
         }
 
-        var isActive = statusUpdateDto.getIsActive();
-        var currentStatus = isActive
+        var isActive = statusUpdateDto.getIsActive()
                 ? trainerService.activateStatus(foundTrainer.getId())
                 : trainerService.deactivateStatus(foundTrainer.getId());
 
-        return ResponseEntity.ok("Trainer with id=" + foundTrainer.getId() +
-                (isActive ? " was activated." : " was deactivated.") +
-                " Current status: " + currentStatus);
+        return ResponseEntity.ok(
+                "Trainer with userName=" + foundTrainer.getUserName() +
+                        (isActive ? " was activated." : " was deactivated.")
+        );
     }
 }

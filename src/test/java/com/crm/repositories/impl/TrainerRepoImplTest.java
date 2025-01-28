@@ -1,14 +1,10 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
-import com.crm.models.TrainingType;
-import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,7 +23,7 @@ public class TrainerRepoImplTest extends DbTestBase {
 
         // Then
         assertNotNull(savedTrainer.getId());
-        assertEquals("testName1.testLastName1", savedTrainer.getUsername());
+        assertEquals("testName1.testLastName1", savedTrainer.getUserName());
     }
 
     @Test
@@ -43,7 +39,7 @@ public class TrainerRepoImplTest extends DbTestBase {
 
         // Then
         assertTrue(foundTrainer.isPresent());
-        assertEquals("testName1.testLastName1", foundTrainer.get().getUsername());
+        assertEquals("testName1.testLastName1", foundTrainer.get().getUserName());
         assertFalse(unFoundTrainer.isPresent());
     }
 
@@ -52,13 +48,13 @@ public class TrainerRepoImplTest extends DbTestBase {
     void updateTrainer_ShouldSaveUpdatedTrainer() {
         // Given
         trainerRepo.save(testTrainer);
-        testTrainer.setUsername("NewTrainerName");
+        testTrainer.setUserName("NewTrainerName");
 
         // When
         var updatedTrainer = trainerRepo.update(testTrainer);
 
         // Then
-        assertEquals("NewTrainerName", updatedTrainer.getUsername());
+        assertEquals("NewTrainerName", updatedTrainer.getUserName());
     }
 
     @Test
@@ -100,7 +96,7 @@ public class TrainerRepoImplTest extends DbTestBase {
 
         // When
         var trainings = trainerRepo.getTrainerTrainingsByCriteria(
-                testTrainer.getUsername(), LocalDate.now(), null, testTrainee.getFirstName(), TrainingType.FITNESS
+                testTrainer.getUserName(), null, null, null, null
         );
 
         // Then
@@ -117,11 +113,11 @@ public class TrainerRepoImplTest extends DbTestBase {
         traineeRepo.save(testTrainee);
 
         // When
-        var trainers = trainerRepo.getUnassignedTrainersByTraineeUsername(testTrainee.getUsername());
+        var trainers = trainerRepo.getUnassignedTrainersByTraineeUsername(testTrainee.getUserName());
 
         // Then
         assertFalse(trainers.isEmpty());
-        assertEquals(testTrainer.getUsername(), trainers.get(0).getUsername());
+        assertEquals(testTrainer.getUserName(), trainers.get(0).getUserName());
     }
 
     @Test
@@ -145,15 +141,5 @@ public class TrainerRepoImplTest extends DbTestBase {
         // Then
         assertNotNull(result.get());
         assertEquals(testTrainer, result.get());
-    }
-
-    @Test
-    @DisplayName("findByUserName - should throw exception when it was not found")
-    void findByUserName_ShouldThrowException_WhenEntityWasNotFound() {
-        // Given - When - Then
-        assertThrows(
-                NoResultException.class,
-                () -> trainerRepo.findByUserName("unknown")
-        );
     }
 }

@@ -23,12 +23,16 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
 
     @Override
     public Optional<T> findByUserName(String username) {
-        log.debug("Start searching entity by username... ");
-        var query = "SELECT u FROM " + getEntityClassName() + " u WHERE u.userName = :username";
-        var user = (T) entityManager.createQuery(query)
-                .setParameter("username", username)
-                .getSingleResult();
-        return Optional.ofNullable(user);
+        try {
+            log.debug("Start searching entity by username... ");
+            var query = "SELECT u FROM " + getEntityClassName() + " u WHERE u.userName = :username";
+            var user = (T) entityManager.createQuery(query)
+                    .setParameter("username", username)
+                    .getSingleResult();
+            return Optional.of(user);
+        } catch (Exception e) {
+            return Optional.empty();
+        }
     }
 
     @Override

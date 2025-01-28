@@ -12,7 +12,6 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
-import java.util.NoSuchElementException;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -54,7 +53,7 @@ class TrainerServiceImplTest extends UnitTestBase {
         var result = trainerService.save(testTrainer);
 
         // Then
-        assertEquals(expectedUserName, testTrainer.getUsername());
+        assertEquals(expectedUserName, testTrainer.getUserName());
         assertNotNull(testTrainer.getPassword());
         assertEquals(testTrainer, result);
 
@@ -73,7 +72,7 @@ class TrainerServiceImplTest extends UnitTestBase {
         var result = trainerService.save("testName1", "testLastName1", "password", TrainingType.FITNESS);
 
         // Then
-        assertEquals(expectedUserName, testTrainer.getUsername());
+        assertEquals(expectedUserName, testTrainer.getUserName());
         assertNotNull(testTrainer.getPassword());
         assertEquals(testTrainer, result);
 
@@ -81,27 +80,9 @@ class TrainerServiceImplTest extends UnitTestBase {
     }
 
     @Test
-    @DisplayName("update should throw exception when trainer does not exist")
-    void update_ShouldThrowException_WhenNotExists() {
-        // Given
-        when(trainerRepo.isExistsById(anyLong())).thenReturn(false);
-
-        // When & Then
-        assertThrows(
-                NoSuchElementException.class,
-                () -> trainerService.update(testTrainer),
-                "Trainer with id=1 not found, updating failed"
-        );
-
-        verify(trainerRepo, times(1)).isExistsById(idArgumentCaptor.capture());
-        verify(trainerRepo, never()).update(trainerArgumentCaptor.capture());
-    }
-
-    @Test
     @DisplayName("update should update trainer if exists")
     void update_ShouldUpdateTrainer_IfExists() {
         // Given
-        when(trainerRepo.isExistsById(anyLong())).thenReturn(true);
         when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
 
         // When
@@ -109,7 +90,6 @@ class TrainerServiceImplTest extends UnitTestBase {
 
         // Then
         assertEquals(testTrainer, result);
-        verify(trainerRepo, times(1)).isExistsById(idArgumentCaptor.capture());
         verify(trainerRepo, times(1)).update(trainerArgumentCaptor.capture());
     }
 
@@ -122,8 +102,8 @@ class TrainerServiceImplTest extends UnitTestBase {
                 .thenReturn(Optional.empty());
 
         // When
-        var result1 = trainerService.findByUsername(testTrainee.getUsername());
-        var result2 = trainerService.findByUsername(testTrainee.getUsername());
+        var result1 = trainerService.findByUsername(testTrainee.getUserName());
+        var result2 = trainerService.findByUsername(testTrainee.getUserName());
 
         // Then
         assertNotNull(result1);
@@ -181,8 +161,8 @@ class TrainerServiceImplTest extends UnitTestBase {
                 .thenReturn(Optional.empty());
 
         // When
-        var result1 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUsername(), "testPassword1");
-        var result2 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUsername(), "wrongPassword");
+        var result1 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUserName(), "testPassword1");
+        var result2 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUserName(), "wrongPassword");
         var result3 = trainerService.isUsernameAndPasswordMatching("unknownUser", "testPassword");
 
         // Then

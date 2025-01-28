@@ -1,13 +1,8 @@
 package com.crm.resources;
 
 import com.crm.dtos.UserLoginDto;
-import com.crm.dtos.UserLoginView;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainee.TraineeSaveDto;
-import com.crm.dtos.trainee.TraineeTrainerUpdateDto;
-import com.crm.dtos.trainee.TraineeUpdateDto;
-import com.crm.dtos.trainee.TraineeView;
-import com.crm.dtos.trainer.TrainerDto;
+import com.crm.dtos.trainee.*;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TraineeMapper;
 import com.crm.mappers.TrainingMapper;
@@ -19,12 +14,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/trainee")
@@ -50,38 +48,13 @@ public class TraineeController {
             }
     )
     @PostMapping
-    public ResponseEntity<UserLoginView> registerTrainee(@RequestBody @Valid TraineeSaveDto traineeDto) {
+    public ResponseEntity<TraineeDto> registerTrainee(@RequestBody @Valid TraineeSaveDto traineeDto) {
         var trainee = traineeMapper.toTrainee(traineeDto);
         var savedTrainee = traineeService.save(trainee);
 
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(traineeMapper.toUserLoginView(savedTrainee));
+                .body(traineeMapper.toDto(savedTrainee));
     }
-
-    @Operation(
-            summary = "Trainee login",
-            description = "Authenticates a trainee based on username and password.",
-            parameters = {
-                    @Parameter(name = "username", description = "Trainee`s username.", required = true),
-                    @Parameter(name = "password", description = "Trainee`s password.", required = true)
-            },
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Login successful"),
-                    @ApiResponse(responseCode = "400", description = "Bad request"),
-                    @ApiResponse(responseCode = "403", description = "Forbidden"),
-                    @ApiResponse(responseCode = "404", description = "Not found"),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error")
-            }
-    )
-    @GetMapping("/login")
-    public ResponseEntity<String> login(
-            @RequestParam("username") String username,
-            @RequestParam("password") String password
-    ) {
-        var isValid = traineeService.isUsernameAndPasswordMatching(username, password);
-        return isValid ? ResponseEntity.ok().build() : ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
-    }
-
 
     @Operation(
             summary = "Change trainee`s password.",
@@ -97,8 +70,8 @@ public class TraineeController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @PutMapping("/login")
-    public ResponseEntity<Boolean> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
+    @PutMapping("/password")
+    public ResponseEntity<String> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
         var foundTrainee = traineeService.findByUsername(loginDto.getUserName());
         var result = traineeService.changePassword(
                 foundTrainee,
@@ -106,7 +79,9 @@ public class TraineeController {
                 loginDto.getNewPassword()
         );
 
-        return ResponseEntity.ok(result);
+        return result
+                ? ResponseEntity.ok("Password successfully changed")
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password was not changed");
     }
 
     @Operation(
@@ -124,7 +99,7 @@ public class TraineeController {
             }
     )
     @GetMapping("/{username}")
-    public ResponseEntity<TraineeView> getTraineeProfile(@PathVariable("username") String username) {
+    public ResponseEntity<TraineeViewDto> getTraineeProfile(@PathVariable("username") String username) {
         var foundTrainee = traineeService.findByUsername(username);
         return foundTrainee != null
                 ? ResponseEntity.ok(traineeMapper.toTraineeView(foundTrainee))
@@ -146,9 +121,16 @@ public class TraineeController {
             }
     )
     @PutMapping
-    public ResponseEntity<TraineeView> updateTrainee(@RequestBody @Valid TraineeUpdateDto updateDto) {
-        var trainee = traineeMapper.toTrainee(updateDto);
-        var updatedTrainee = traineeService.update(trainee);
+    public ResponseEntity<TraineeViewDto> updateTrainee(@RequestBody @Valid TraineeUpdateDto updateDto) {
+        var existingTrainee = traineeService.findByUsername(updateDto.getUserName());
+        if (!existingTrainee.getUserName().equals(updateDto.getUserName())) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        var fromDto = traineeMapper.toTrainee(updateDto);
+        traineeMapper.updateTrainee(existingTrainee, fromDto);
+
+        var updatedTrainee = traineeService.update(existingTrainee);
         return updatedTrainee != null
                 ? ResponseEntity.ok(traineeMapper.toTraineeView(updatedTrainee))
                 : ResponseEntity.notFound().build();
@@ -169,14 +151,18 @@ public class TraineeController {
             }
     )
     @DeleteMapping("/{username}")
-    public ResponseEntity<String> deleteTrainee(@PathVariable("username") String username) {
-        var foundTrainee = traineeService.findByUsername(username);
+    public ResponseEntity<String> deleteTrainee(@PathVariable("username") String username) throws BadRequestException {
+        var foundTrainee = Optional.ofNullable(traineeService.findByUsername(username))
+                .orElseThrow(() -> new BadRequestException("Trainee with user name= " + username + " was not found"));
+
         traineeService.delete(foundTrainee);
-        return ResponseEntity.ok("Trainee with id=" + foundTrainee.getId() + " was deleted");
+        return ResponseEntity.ok(
+                String.format("Trainee with userName=%s was deleted", username)
+        );
     }
 
     @Operation(
-            summary = "Update trainee's trainer list",
+            summary = "Update trainee's training list",
             parameters = {
                     @Parameter(name = "updateDto", description = "TraineeUpdateDto object.", required = true)
             },
@@ -188,10 +174,35 @@ public class TraineeController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @PutMapping("/trainers")
-    public ResponseEntity<List<TrainerDto>> updateTraineeTrainers(@RequestBody @Valid TraineeTrainerUpdateDto updateDto) {
-        return ResponseEntity.status(HttpStatus.NOT_IMPLEMENTED).build();
+    @PutMapping("/trainings")
+    public ResponseEntity<Set<TrainingShortView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) throws BadRequestException {
+        var foundTrainee = Optional.ofNullable(traineeService.findByUsername(updateDto.getUserName()))
+                .orElseThrow(() -> new BadRequestException("Trainee with username " + updateDto.getUserName() + " not found"));
+
+        boolean invalidTrainings = updateDto.getTrainings()
+                .stream()
+                .anyMatch(trainingDto -> !trainingDto.getTrainee().getId().equals(foundTrainee.getId()));
+
+        if (invalidTrainings) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        var newTrainings = updateDto.getTrainings()
+                .stream()
+                .map(trainingMapper::toTraining)
+                .collect(Collectors.toSet());
+
+        foundTrainee.getTrainings().addAll(newTrainings);
+
+        return ResponseEntity.ok(
+                traineeService.update(foundTrainee)
+                        .getTrainings()
+                        .stream()
+                        .map(trainingMapper::toTrainingShortView)
+                        .collect(Collectors.toSet())
+        );
     }
+
 
     @Operation(
             summary = "Get trainee trainings list",
@@ -212,7 +223,7 @@ public class TraineeController {
             }
     )
     @GetMapping("/trainings")
-    public ResponseEntity<List<TrainingShortView>> getTraineeTrainings(
+    public ResponseEntity<Set<TrainingShortView>> getTraineeTrainings(
             @RequestParam("username") String username,
             @RequestParam(name = "period-from", required = false) LocalDate periodFrom,
             @RequestParam(name = "period-to", required = false) LocalDate periodTo,
@@ -225,11 +236,11 @@ public class TraineeController {
                                 periodFrom,
                                 periodTo,
                                 trainerUserName,
-                                TrainingType.valueOf(trainingType)
+                                trainingType != null ? TrainingType.valueOf(trainingType) : null
                         )
                         .stream()
                         .map(trainingMapper::toTrainingShortView)
-                        .toList()
+                        .collect(Collectors.toSet())
         );
     }
 
@@ -254,13 +265,13 @@ public class TraineeController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainee not found");
         }
 
-        var isActive = statusUpdateDto.getIsActive();
-        var currentStatus = isActive
+        var isActive = statusUpdateDto.getIsActive()
                 ? traineeService.activateStatus(foundTrainee.getId())
                 : traineeService.deactivateStatus(foundTrainee.getId());
 
-        return ResponseEntity.ok("Trainee with id=" + foundTrainee.getId() +
-                (isActive ? " was activated." : " was deactivated.") +
-                " Current status: " + currentStatus);
+        return ResponseEntity.ok(
+                "Trainee with username=" + foundTrainee.getUserName() +
+                        (isActive ? " was activated." : " was deactivated.")
+        );
     }
 }

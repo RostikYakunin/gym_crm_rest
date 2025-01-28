@@ -18,7 +18,7 @@ public interface TrainingMapper {
     @Mapping(source = "trainingDate", target = "date")
     @Mapping(source = "trainingType", target = "type")
     @Mapping(source = "trainingDuration", target = "duration")
-    @Mapping(target = "traineeUserName", expression = "java(training.getTrainee().getUserName())")
+    @Mapping(target = "trainerUserName", expression = "java(training.getTrainer().getUserName())")
     TrainingShortView toTrainingShortView(Training training);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

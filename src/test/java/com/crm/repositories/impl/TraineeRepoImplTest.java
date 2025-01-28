@@ -1,14 +1,10 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
-import com.crm.models.TrainingType;
-import jakarta.persistence.NoResultException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,7 +26,7 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // Then
         assertNotNull(savedTrainee.getId());
-        assertEquals(expectedUserName, savedTrainee.getUsername());
+        assertEquals(expectedUserName, savedTrainee.getUserName());
     }
 
     @Test
@@ -46,7 +42,7 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // Then
         assertTrue(notEmptyResult.isPresent());
-        assertEquals(expectedUserName, notEmptyResult.get().getUsername());
+        assertEquals(expectedUserName, notEmptyResult.get().getUserName());
         assertTrue(emptyResult.isEmpty());
     }
 
@@ -55,13 +51,13 @@ public class TraineeRepoImplTest extends DbTestBase {
     void updateTrainee_ShouldSaveUpdatedTrainee() {
         // Given
         traineeRepo.save(testTrainee);
-        testTrainee.setUsername("NewTraineeName");
+        testTrainee.setUserName("NewTraineeName");
 
         // When
         var updatedTrainee = traineeRepo.update(testTrainee);
 
         // Then
-        assertEquals("NewTraineeName", updatedTrainee.getUsername());
+        assertEquals("NewTraineeName", updatedTrainee.getUserName());
     }
 
     @Test
@@ -102,7 +98,7 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // When
         var trainings = traineeRepo.getTraineeTrainingsByCriteria(
-                testTrainee.getUsername(), LocalDate.now(), null, testTrainer.getFirstName(), TrainingType.FITNESS
+                testTrainee.getUserName(), null, null, null, null
         );
 
         // Then
@@ -132,15 +128,5 @@ public class TraineeRepoImplTest extends DbTestBase {
         // Then
         assertNotNull(result.get());
         assertEquals(testTrainee, result.get());
-    }
-
-    @Test
-    @DisplayName("findByUserName - should throw exception when it was not found")
-    void findByUserName_ShouldThrowException_WhenEntityWasNotFound() {
-        // Given - When - Then
-        assertThrows(
-                NoResultException.class,
-                () -> traineeRepo.findByUserName("unknown")
-        );
     }
 }

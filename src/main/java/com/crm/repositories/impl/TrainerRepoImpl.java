@@ -33,22 +33,43 @@ public class TrainerRepoImpl extends AbstractUserRepo<Trainer> implements Traine
     }
 
     @Override
-    public List<Training> getTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeUserName, TrainingType trainingType) {
-        var jpql = """
-                SELECT t FROM Training t
-                WHERE t.trainer.userName = :trainerUsername
-                AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
-                AND (:toDate IS NULL OR t.trainingDate <= :toDate)
-                AND (:traineeName IS NULL OR t.trainee.firstName LIKE CONCAT('%', :traineeName, '%') OR t.trainee.lastName LIKE CONCAT('%', :traineeName, '%'))
-                AND (:trainingType IS NULL OR t.trainingType = :trainingType)
-                """;
+    public List<Training> getTrainerTrainingsByCriteria(
+            String trainerUsername,
+            LocalDate fromDate,
+            LocalDate toDate,
+            String traineeUserName,
+            TrainingType trainingType
+    ) {
+        var dynamicJpqlQuery = "SELECT t FROM Training t WHERE t.trainer.userName = :trainerUsername";
 
-        var query = entityManager.createQuery(jpql, Training.class);
+        if (fromDate != null) {
+            dynamicJpqlQuery += " AND t.trainingDate >= :fromDate";
+        }
+        if (toDate != null) {
+            dynamicJpqlQuery += " AND t.trainingDate <= :toDate";
+        }
+        if (traineeUserName != null && !traineeUserName.isEmpty()) {
+            dynamicJpqlQuery += " AND (t.trainee.firstName LIKE :traineeName OR t.trainee.lastName LIKE :traineeName)";
+        }
+        if (trainingType != null) {
+            dynamicJpqlQuery += " AND t.trainingType = :trainingType";
+        }
+
+        var query = entityManager.createQuery(dynamicJpqlQuery, Training.class);
         query.setParameter("trainerUsername", trainerUsername);
-        query.setParameter("fromDate", fromDate != null ? fromDate.atStartOfDay() : null);
-        query.setParameter("toDate", toDate != null ? toDate.atTime(23, 59, 59) : null);
-        query.setParameter("traineeName", traineeUserName);
-        query.setParameter("trainingType", trainingType);
+
+        if (fromDate != null) {
+            query.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            query.setParameter("toDate", toDate);
+        }
+        if (traineeUserName != null && !traineeUserName.isEmpty()) {
+            query.setParameter("traineeName", "%" + traineeUserName + "%");
+        }
+        if (trainingType != null) {
+            query.setParameter("trainingType", trainingType);
+        }
 
         return query.getResultList();
     }

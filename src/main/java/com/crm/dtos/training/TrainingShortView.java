@@ -23,5 +23,5 @@ public class TrainingShortView {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING)
     private Duration duration;
-    private String traineeUserName;
+    private String trainerUserName;
 }
