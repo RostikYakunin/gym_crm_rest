@@ -179,11 +179,11 @@ public class TraineeController {
         var foundTrainee = Optional.ofNullable(traineeService.findByUsername(updateDto.getUserName()))
                 .orElseThrow(() -> new BadRequestException("Trainee with username " + updateDto.getUserName() + " not found"));
 
-        boolean invalidTrainings = updateDto.getTrainings()
+        boolean containsInvalidTrainings = updateDto.getTrainings()
                 .stream()
                 .anyMatch(trainingDto -> !trainingDto.getTrainee().getId().equals(foundTrainee.getId()));
 
-        if (invalidTrainings) {
+        if (containsInvalidTrainings) {
             return ResponseEntity.badRequest().build();
         }
 

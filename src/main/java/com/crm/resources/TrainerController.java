@@ -118,11 +118,15 @@ public class TrainerController {
     )
     @PutMapping
     public ResponseEntity<TrainerView> updateTrainer(@RequestBody @Valid TrainerUpdateDto updateDto) {
-        var currentTrainer = trainerService.findByUsername(updateDto.getUserName());
-        var fromDto = trainerMapper.toTrainer(updateDto);
-        trainerMapper.updateTrainer(currentTrainer, fromDto);
+        var existingTrainer = trainerService.findByUsername(updateDto.getUserName());
+        if (!existingTrainer.getUserName().equals(updateDto.getUserName())) {
+            return ResponseEntity.badRequest().build();
+        }
 
-        var updatedTrainer = trainerService.update(currentTrainer);
+        var fromDto = trainerMapper.toTrainer(updateDto);
+        trainerMapper.updateTrainer(existingTrainer, fromDto);
+
+        var updatedTrainer = trainerService.update(existingTrainer);
         return updatedTrainer != null
                 ? ResponseEntity.ok(trainerMapper.toTrainerView(updatedTrainer))
                 : ResponseEntity.notFound().build();
