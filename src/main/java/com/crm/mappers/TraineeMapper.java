@@ -3,7 +3,7 @@ package com.crm.mappers;
 import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeSaveDto;
 import com.crm.dtos.trainee.TraineeUpdateDto;
-import com.crm.dtos.trainee.TraineeViewDto;
+import com.crm.dtos.trainee.TraineeView;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
@@ -41,15 +41,15 @@ public interface TraineeMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(source = "active", target = "isActive")
     @Mapping(target = "trainersList", source = "trainings", qualifiedByName = "mapTrainingsToTrainers")
-    TraineeViewDto toTraineeView(Trainee trainee);
+    TraineeView toTraineeView(Trainee trainee);
 
     @Named("mapTrainingsToTrainers")
-    default Set<TraineeViewDto.TrainerListView> mapTrainingsToTrainers(List<Training> trainings) {
+    default Set<TraineeView.TrainerListView> mapTrainingsToTrainers(List<Training> trainings) {
         if (trainings == null) return null;
         return trainings.stream()
                 .map(training -> toTrainerView(training.getTrainer()))
                 .collect(Collectors.toSet());
     }
 
-    TraineeViewDto.TrainerListView toTrainerView(Trainer trainer);
+    TraineeView.TrainerListView toTrainerView(Trainer trainer);
 }

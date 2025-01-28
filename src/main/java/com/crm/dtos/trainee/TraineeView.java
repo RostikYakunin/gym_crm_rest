@@ -15,7 +15,7 @@ import java.util.Set;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class TraineeViewDto {
+public class TraineeView {
     private String firstName;
     private String lastName;
 

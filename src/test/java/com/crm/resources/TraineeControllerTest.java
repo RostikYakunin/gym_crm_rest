@@ -6,7 +6,7 @@ import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainee.TraineeSaveDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeUpdateDto;
-import com.crm.dtos.trainee.TraineeViewDto;
+import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TraineeMapper;
@@ -141,7 +141,7 @@ class TraineeControllerTest extends UnitTestBase {
         var foundTrainee = traineeExists ? testTrainee : null;
 
         when(traineeService.findByUsername(anyString())).thenReturn(foundTrainee);
-        if (traineeExists) when(traineeMapper.toTraineeView(any(Trainee.class))).thenReturn(testTraineeViewDto);
+        if (traineeExists) when(traineeMapper.toTraineeView(any(Trainee.class))).thenReturn(testTraineeView);
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainee/" + username))
@@ -382,7 +382,7 @@ class TraineeControllerTest extends UnitTestBase {
         when(traineeService.findByUsername(anyString())).thenReturn(testTrainee);
 
         if (expectedStatus == 200) {
-            var traineeViewDto = TraineeViewDto.builder()
+            var traineeViewDto = TraineeView.builder()
                     .firstName("newFirstName")
                     .lastName("newLastName")
                     .build();

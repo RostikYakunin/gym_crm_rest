@@ -2,7 +2,7 @@ package com.crm;
 
 import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeSaveDto;
-import com.crm.dtos.trainee.TraineeViewDto;
+import com.crm.dtos.trainee.TraineeView;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
@@ -36,7 +36,7 @@ public abstract class UnitTestBase {
     protected Trainer testTrainer;
     protected TraineeSaveDto testTraineeSaveDto;
     protected TraineeDto testTraineeDto;
-    protected TraineeViewDto testTraineeViewDto;
+    protected TraineeView testTraineeView;
 
     @BeforeEach
     void init() {
@@ -96,7 +96,7 @@ public abstract class UnitTestBase {
         testTrainee = null;
         testTrainer = null;
         testTraineeSaveDto = null;
-        testTraineeViewDto = null;
+        testTraineeView = null;
         testTraineeDto = null;
     }
 }

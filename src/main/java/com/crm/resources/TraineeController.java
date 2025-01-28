@@ -99,7 +99,7 @@ public class TraineeController {
             }
     )
     @GetMapping("/{username}")
-    public ResponseEntity<TraineeViewDto> getTraineeProfile(@PathVariable("username") String username) {
+    public ResponseEntity<TraineeView> getTraineeProfile(@PathVariable("username") String username) {
         var foundTrainee = traineeService.findByUsername(username);
         return foundTrainee != null
                 ? ResponseEntity.ok(traineeMapper.toTraineeView(foundTrainee))
@@ -121,7 +121,7 @@ public class TraineeController {
             }
     )
     @PutMapping
-    public ResponseEntity<TraineeViewDto> updateTrainee(@RequestBody @Valid TraineeUpdateDto updateDto) {
+    public ResponseEntity<TraineeView> updateTrainee(@RequestBody @Valid TraineeUpdateDto updateDto) {
         var existingTrainee = traineeService.findByUsername(updateDto.getUserName());
         if (!existingTrainee.getUserName().equals(updateDto.getUserName())) {
             return ResponseEntity.badRequest().build();
