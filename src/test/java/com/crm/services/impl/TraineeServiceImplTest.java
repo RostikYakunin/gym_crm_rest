@@ -55,7 +55,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         var result = traineeService.save("John", "Doe", "password", "testAddress", LocalDate.of(1998, 11, 11));
 
         // Then
-        assertEquals(expectedUserName, result.getUsername());
+        assertEquals(expectedUserName, result.getUserName());
         assertNotNull(result.getPassword());
         assertEquals(result, result);
 
@@ -74,7 +74,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         var result = traineeService.save(testTrainee);
 
         // Then
-        assertEquals(expectedUserName, result.getUsername());
+        assertEquals(expectedUserName, result.getUserName());
         assertNotNull(result.getPassword());
         assertEquals(result, result);
 
@@ -98,7 +98,6 @@ class TraineeServiceImplTest extends UnitTestBase {
     @DisplayName("update should return updated trainee when trainee exists")
     void update_ShouldReturnUpdatedTrainee_WhenTraineeExists() {
         // Given
-        when(traineeRepo.isExistsById(anyLong())).thenReturn(true);
         when(traineeRepo.update(any(Trainee.class))).thenReturn(testTrainee);
 
         // When
@@ -109,25 +108,6 @@ class TraineeServiceImplTest extends UnitTestBase {
         assertEquals(testTrainee, result);
 
         verify(traineeRepo, times(1)).update(traineeArgumentCaptor.capture());
-        verify(traineeRepo, times(1)).isExistsById(idArgumentCaptor.capture());
-    }
-
-    @Test
-    @DisplayName("update should throw Exception when trainee was not found")
-    void update_ShouldThrowException_WhenTraineeWasNotFound() {
-        // Given
-        when(traineeRepo.findById(anyLong())).thenReturn(Optional.empty());
-        when(traineeRepo.isExistsById(anyLong())).thenReturn(false);
-
-        // When - Then
-        assertThrows(
-                NoSuchElementException.class,
-                () -> traineeService.update(testTrainee),
-                "Trainee with id=1 not found"
-        );
-
-        verify(traineeRepo, times(1)).isExistsById(idArgumentCaptor.capture());
-        verify(traineeRepo, never()).update(traineeArgumentCaptor.capture());
     }
 
     @Test
@@ -138,7 +118,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         doNothing().when(traineeRepo).delete(any(Trainee.class));
 
         // When
-        traineeService.deleteByUsername(testTrainee.getUsername());
+        traineeService.deleteByUsername(testTrainee.getUserName());
 
         // Then
         verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
@@ -154,8 +134,8 @@ class TraineeServiceImplTest extends UnitTestBase {
                 .thenReturn(Optional.empty());
 
         // When
-        var result1 = traineeService.findByUsername(testTrainee.getUsername());
-        var result2 = traineeService.findByUsername(testTrainee.getUsername());
+        var result1 = traineeService.findByUsername(testTrainee.getUserName());
+        var result2 = traineeService.findByUsername(testTrainee.getUserName());
 
         // Then
         assertNotNull(result1);

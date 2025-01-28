@@ -28,6 +28,7 @@ public interface TraineeMapper {
     TraineeDto toDto(Trainee trainee);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    @Mapping(target = "active", constant = "true")
     @Mapping(target = "trainings", ignore = true)
     void updateTrainee(@MappingTarget Trainee existingTrainee, Trainee updatedTrainee);
 
