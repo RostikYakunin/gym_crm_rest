@@ -27,10 +27,10 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.util.Collections;
-import java.util.List;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -124,7 +124,7 @@ class TrainerControllerTest extends UnitTestBase {
         Trainer trainer = new Trainer();
 
         if (!userName.isEmpty() && !oldPassword.isEmpty() && !newPassword.isEmpty()) {
-            when(trainerService.findByUsername(userName)).thenReturn(trainer);
+            when(trainerService.findByUsernameOrThrow(userName)).thenReturn(trainer);
             when(trainerService.changePassword(trainer, oldPassword, newPassword)).thenReturn(true);
 
 
@@ -154,7 +154,7 @@ class TrainerControllerTest extends UnitTestBase {
         var trainerView = new TrainerView();
 
         if (!username.isEmpty()) {
-            when(trainerService.findByUsername(username)).thenReturn(trainer);
+            when(trainerService.findByUsernameOrThrow(username)).thenReturn(trainer);
             when(trainerMapper.toTrainerView(trainer)).thenReturn(trainerView);
 
             //When - Then
@@ -191,23 +191,22 @@ class TrainerControllerTest extends UnitTestBase {
                 .isActive(isActive.isEmpty() ? null : Boolean.parseBoolean(isActive))
                 .build();
 
-        var trainer = new Trainer();
+        var trainer = Trainer.builder().userName(userName).build();
         var trainerView = new TrainerView();
 
         if (!firstName.isEmpty() && !lastName.isEmpty() && !userName.isEmpty() && !specialization.isEmpty() && !isActive.isEmpty()) {
-            when(trainerService.findByUsername(userName)).thenReturn(trainer);
-            when(trainerMapper.toTrainer(updateDto)).thenReturn(trainer);
-            when(trainerService.update(trainer)).thenReturn(trainer);
-            when(trainerMapper.toTrainerView(trainer)).thenReturn(trainerView);
-
+            when(trainerService.findById(anyLong())).thenReturn(trainer);
+            when(trainerMapper.toTrainer(any(TrainerUpdateDto.class))).thenReturn(trainer);
+            when(trainerService.update(any(Trainer.class))).thenReturn(trainer);
+            when(trainerMapper.toTrainerView(any(Trainer.class))).thenReturn(trainerView);
 
             // When - Then
-            mockMvc.perform(put("/api/v1/trainer")
+            mockMvc.perform(put("/api/v1/trainer/1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateDto)))
                     .andExpect(status().isOk());
         } else {
-            mockMvc.perform(put("/api/v1/trainer")
+            mockMvc.perform(put("/api/v1/trainer/1")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(updateDto)))
                     .andExpect(status().isBadRequest());
@@ -252,7 +251,7 @@ class TrainerControllerTest extends UnitTestBase {
         var statusUpdateDto = new UserStatusUpdateDto(userName, isActive);
         testTrainer.setUserName(userName);
 
-        when(trainerService.findByUsername(anyString())).thenReturn(testTrainer);
+        when(trainerService.findByUsernameOrThrow(anyString())).thenReturn(testTrainer);
         lenient().when(trainerService.activateStatus(anyLong())).thenReturn(true);
         lenient().when(trainerService.deactivateStatus(anyLong())).thenReturn(false);
 

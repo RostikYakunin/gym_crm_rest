@@ -1,6 +1,7 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -33,7 +34,6 @@ public class TraineeRepoImplTest extends DbTestBase {
     @DisplayName("Find a trainee by existing ID and verify it is returned")
     void findTraineeById_WhenIdExists_ShouldReturnTrainee() {
         // Given
-        var expectedUserName = "testName.testLastName";
         var savedId = traineeRepo.save(testTrainee);
 
         // When
@@ -42,7 +42,7 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // Then
         assertTrue(notEmptyResult.isPresent());
-        assertEquals(expectedUserName, notEmptyResult.get().getUserName());
+        assertEquals(testTrainee.getUserName(), notEmptyResult.get().getUserName());
         assertTrue(emptyResult.isEmpty());
     }
 
@@ -64,14 +64,16 @@ public class TraineeRepoImplTest extends DbTestBase {
     @DisplayName("Delete a trainee and verify it is removed")
     void deleteTrainee_ShouldRemoveTrainee() {
         // Given
-        traineeRepo.save(testTrainee);
+        var saved = traineeRepo.save(testTrainee);
 
         // When
-        traineeRepo.delete(testTrainee);
+        traineeRepo.delete(saved);
 
         // Then
-        var deletedTrainee = traineeRepo.findById(testTrainee.getId());
-        assertFalse(deletedTrainee.isPresent());
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeRepo.findByUserName(saved.getUserName())
+        );
     }
 
     @Test

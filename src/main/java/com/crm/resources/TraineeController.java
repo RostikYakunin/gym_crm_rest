@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.apache.coyote.BadRequestException;
@@ -72,7 +73,7 @@ public class TraineeController {
     )
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
-        var foundTrainee = traineeService.findByUsername(loginDto.getUserName());
+        var foundTrainee = traineeService.findByUsernameOrThrow(loginDto.getUserName());
         var result = traineeService.changePassword(
                 foundTrainee,
                 loginDto.getOldPassword(),
@@ -81,7 +82,7 @@ public class TraineeController {
 
         return result
                 ? ResponseEntity.ok("Password successfully changed")
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password was not changed");
+                : ResponseEntity.badRequest().body("Password was not changed: inputted password is wrong");
     }
 
     @Operation(
@@ -100,17 +101,16 @@ public class TraineeController {
     )
     @GetMapping("/{username}")
     public ResponseEntity<TraineeView> getTraineeProfile(@PathVariable("username") String username) {
-        var foundTrainee = traineeService.findByUsername(username);
-        return foundTrainee != null
-                ? ResponseEntity.ok(traineeMapper.toTraineeView(foundTrainee))
-                : ResponseEntity.notFound().build();
+        var foundTrainee = traineeService.findByUsernameOrThrow(username);
+        return ResponseEntity.ok(traineeMapper.toTraineeView(foundTrainee));
     }
 
     @Operation(
             summary = "Update trainee`s profile",
             description = "Modifies trainee details.",
             parameters = {
-                    @Parameter(name = "updateDto", description = "TraineeUpdateDto object.", required = true)
+                    @Parameter(name = "updateDto", description = "TraineeUpdateDto object.", required = true),
+                    @Parameter(name = "id", description = "Trainee`s id.", required = true),
             },
             responses = {
                     @ApiResponse(responseCode = "200", description = "Profile updated successfully"),
@@ -120,9 +120,14 @@ public class TraineeController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @PutMapping
-    public ResponseEntity<TraineeView> updateTrainee(@RequestBody @Valid TraineeUpdateDto updateDto) {
-        var existingTrainee = traineeService.findByUsername(updateDto.getUserName());
+    @PutMapping("/{id}")
+    public ResponseEntity<TraineeView> updateTrainee(
+            @PathVariable("id") Long id,
+            @RequestBody @Valid TraineeUpdateDto updateDto
+    ) {
+        var existingTrainee = Optional.ofNullable(traineeService.findById(id))
+                .orElseThrow(() -> new EntityNotFoundException("Trainee with user name=" + updateDto.getUserName() + " not found."));
+
         if (!existingTrainee.getUserName().equals(updateDto.getUserName())) {
             return ResponseEntity.badRequest().build();
         }
@@ -151,9 +156,8 @@ public class TraineeController {
             }
     )
     @DeleteMapping("/{username}")
-    public ResponseEntity<String> deleteTrainee(@PathVariable("username") String username) throws BadRequestException {
-        var foundTrainee = Optional.ofNullable(traineeService.findByUsername(username))
-                .orElseThrow(() -> new BadRequestException("Trainee with user name= " + username + " was not found"));
+    public ResponseEntity<String> deleteTrainee(@PathVariable("username") String username) {
+        var foundTrainee = traineeService.findByUsernameOrThrow(username);
 
         traineeService.delete(foundTrainee);
         return ResponseEntity.ok(
@@ -176,8 +180,7 @@ public class TraineeController {
     )
     @PutMapping("/trainings")
     public ResponseEntity<Set<TrainingShortView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) throws BadRequestException {
-        var foundTrainee = Optional.ofNullable(traineeService.findByUsername(updateDto.getUserName()))
-                .orElseThrow(() -> new BadRequestException("Trainee with username " + updateDto.getUserName() + " not found"));
+        var foundTrainee = traineeService.findByUsernameOrThrow(updateDto.getUserName());
 
         boolean containsInvalidTrainings = updateDto.getTrainings()
                 .stream()
@@ -260,11 +263,7 @@ public class TraineeController {
     )
     @PatchMapping("/status")
     public ResponseEntity<String> updateTraineeStatus(@RequestBody @Valid UserStatusUpdateDto statusUpdateDto) {
-        var foundTrainee = traineeService.findByUsername(statusUpdateDto.getUserName());
-        if (foundTrainee == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainee not found");
-        }
-
+        var foundTrainee = traineeService.findByUsernameOrThrow(statusUpdateDto.getUserName());
         var isActive = statusUpdateDto.getIsActive()
                 ? traineeService.activateStatus(foundTrainee.getId())
                 : traineeService.deactivateStatus(foundTrainee.getId());

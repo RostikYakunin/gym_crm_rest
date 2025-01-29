@@ -4,7 +4,6 @@ import com.crm.models.TrainingType;
 import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
-import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 
@@ -25,31 +24,37 @@ public class TraineeRepoImpl extends AbstractUserRepo<Trainee> implements Traine
     }
 
     @Override
-    @Transactional
     public void delete(Trainee trainee) {
         log.debug("Start deleting entity...");
-        trainee = entityManager.merge(entityManager.find(Trainee.class, trainee.getId()));
-        entityManager.remove(trainee);
+        if (!trainee.getTrainings().isEmpty()) {
+            entityManager.createQuery("DELETE FROM Training t WHERE t.trainee.id = :traineeId")
+                    .setParameter("traineeId", trainee.getId())
+                    .executeUpdate();
+        }
+
+        entityManager.createQuery("DELETE FROM Trainee t WHERE t.id = :traineeId")
+                .setParameter("traineeId", trainee.getId())
+                .executeUpdate();
     }
 
     @Override
     public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
-        var dynamicJpdlQuery = "SELECT t FROM Training t WHERE t.trainee.userName = :traineeUsername";
+        var dynamicJpqlQuery = "SELECT t FROM Training t WHERE t.trainee.userName = :traineeUsername";
 
         if (fromDate != null) {
-            dynamicJpdlQuery += " AND t.trainingDate >= :fromDate";
+            dynamicJpqlQuery += " AND t.trainingDate >= :fromDate";
         }
         if (toDate != null) {
-            dynamicJpdlQuery += " AND t.trainingDate <= :toDate";
+            dynamicJpqlQuery += " AND t.trainingDate <= :toDate";
         }
         if (trainerUserName != null && !trainerUserName.isEmpty()) {
-            dynamicJpdlQuery += " AND t.trainer.userName = :trainerUserName";
+            dynamicJpqlQuery += " AND t.trainer.userName = :trainerUserName";
         }
         if (trainingType != null) {
-            dynamicJpdlQuery += " AND t.trainingType = :trainingType";
+            dynamicJpqlQuery += " AND t.trainingType = :trainingType";
         }
 
-        var query = entityManager.createQuery(dynamicJpdlQuery, Training.class);
+        var query = entityManager.createQuery(dynamicJpqlQuery, Training.class);
         query.setParameter("traineeUsername", traineeUsername);
 
         if (fromDate != null) {

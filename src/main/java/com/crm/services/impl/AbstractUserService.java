@@ -4,9 +4,12 @@ import com.crm.repositories.UserRepo;
 import com.crm.repositories.entities.User;
 import com.crm.services.UserService;
 import com.crm.utils.UserUtils;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -24,6 +27,12 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
     public T findByUsername(String username) {
         log.info("Searching for entity with username={}", username);
         return repository.findByUserName(username).orElse(null);
+    }
+
+    @Override
+    public T findByUsernameOrThrow(String userName) {
+        return Optional.ofNullable(findByUsername(userName))
+                .orElseThrow(() -> new EntityNotFoundException("Entity with username " + userName + " not found"));
     }
 
     @Override

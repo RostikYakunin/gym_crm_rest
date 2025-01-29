@@ -3,6 +3,7 @@ package com.crm.repositories.impl;
 import com.crm.repositories.UserRepo;
 import com.crm.repositories.entities.User;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
@@ -29,9 +30,10 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
             var user = (T) entityManager.createQuery(query)
                     .setParameter("username", username)
                     .getSingleResult();
-            return Optional.of(user);
+            return Optional.ofNullable(user);
         } catch (Exception e) {
-            return Optional.empty();
+            log.error(e.getMessage());
+            throw new EntityNotFoundException("Entity with user name=" + username + " not found");
         }
     }
 

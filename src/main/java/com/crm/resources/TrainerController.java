@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/v1/trainer")
@@ -68,7 +70,7 @@ public class TrainerController {
     )
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
-        var foundTrainer = trainerService.findByUsername(loginDto.getUserName());
+        var foundTrainer = trainerService.findByUsernameOrThrow(loginDto.getUserName());
         var result = trainerService.changePassword(
                 foundTrainer,
                 loginDto.getOldPassword(),
@@ -77,7 +79,7 @@ public class TrainerController {
 
         return result
                 ? ResponseEntity.ok("Password successfully changed")
-                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password was not changed");
+                : ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Password was not changed: inputted password is wrong");
     }
 
     @Operation(
@@ -96,10 +98,8 @@ public class TrainerController {
     )
     @GetMapping("/{username}")
     public ResponseEntity<TrainerView> getTrainerProfile(@PathVariable("username") String username) {
-        var foundTrainer = trainerService.findByUsername(username);
-        return foundTrainer != null
-                ? ResponseEntity.ok(trainerMapper.toTrainerView(foundTrainer))
-                : ResponseEntity.notFound().build();
+        var foundTrainer = trainerService.findByUsernameOrThrow(username);
+        return ResponseEntity.ok(trainerMapper.toTrainerView(foundTrainer));
     }
 
     @Operation(
@@ -116,12 +116,13 @@ public class TrainerController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             }
     )
-    @PutMapping
-    public ResponseEntity<TrainerView> updateTrainer(@RequestBody @Valid TrainerUpdateDto updateDto) {
-        var existingTrainer = trainerService.findByUsername(updateDto.getUserName());
-        if (!existingTrainer.getUserName().equals(updateDto.getUserName())) {
-            return ResponseEntity.badRequest().build();
-        }
+    @PutMapping("/{id}")
+    public ResponseEntity<TrainerView> updateTrainer(
+            @PathVariable("id") Long id,
+            @RequestBody @Valid TrainerUpdateDto updateDto
+    ) {
+        var existingTrainer = Optional.ofNullable(trainerService.findById(id))
+                .orElseThrow(() -> new EntityNotFoundException("Trainee with user name=" + updateDto.getUserName() + " not found."));
 
         var fromDto = trainerMapper.toTrainer(updateDto);
         trainerMapper.updateTrainer(existingTrainer, fromDto);
@@ -207,11 +208,7 @@ public class TrainerController {
     )
     @PatchMapping("/status")
     public ResponseEntity<String> updateTraineeStatus(@RequestBody @Valid UserStatusUpdateDto statusUpdateDto) {
-        var foundTrainer = trainerService.findByUsername(statusUpdateDto.getUserName());
-        if (foundTrainer == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Trainer not found");
-        }
-
+        var foundTrainer = trainerService.findByUsernameOrThrow(statusUpdateDto.getUserName());
         var isActive = statusUpdateDto.getIsActive()
                 ? trainerService.activateStatus(foundTrainer.getId())
                 : trainerService.deactivateStatus(foundTrainer.getId());
