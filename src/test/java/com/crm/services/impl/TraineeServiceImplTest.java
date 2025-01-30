@@ -1,19 +1,25 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
+import com.crm.models.TrainingType;
 import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
+import com.crm.repositories.entities.Training;
 import com.crm.utils.UserUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -202,5 +208,63 @@ class TraineeServiceImplTest extends UnitTestBase {
         Assertions.assertFalse(result2);
         Assertions.assertFalse(result3);
         verify(traineeRepo, times(3)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should find user by user name and nothing was thrown")
+    void findByUsernameOrThrow_ShouldReturnEntity_WhenUserExists() {
+        // Given
+        when(traineeRepo.findByUserName(anyString())).thenReturn(Optional.of(testTrainee));
+
+        // When
+
+        var actualUser = assertDoesNotThrow(
+                () -> traineeService.findByUsernameOrThrow(testTrainee.getUserName())
+        );
+
+        // Then
+        assertNotNull(actualUser);
+        assertEquals(testTrainee, actualUser);
+        verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException when nothing was found")
+    void findByUsernameOrThrow_ShouldThrowException_WhenUserNotFound() {
+        // Given
+        when(traineeRepo.findByUserName(anyString())).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeService.findByUsernameOrThrow("username"),
+                "Entity with username username not found"
+        );
+
+        verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "trainee1, trainer1, YOGA, 1",
+            "trainee2, trainer2, YOGA, 0"
+    })
+    @DisplayName("Should return/not return list of trainings")
+    void findTraineeTrainingsByCriteria_ShouldReturnCorrectData(String traineeUsername, String trainerUsername, TrainingType trainingType, int expectedSize) {
+        // Given
+        var fromDate = LocalDate.of(2024, 1, 1);
+        var toDate = LocalDate.of(2024, 12, 31);
+        List<Training> expectedTrainings = expectedSize > 0 ? List.of(mock(Training.class)) : Collections.emptyList();
+
+        when(traineeRepo.getTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType))
+                .thenReturn(expectedTrainings);
+
+        // When
+        var actualTrainings = traineeService.findTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType);
+
+        // Then
+        assertNotNull(actualTrainings);
+        assertEquals(expectedSize, actualTrainings.size());
+        verify(traineeRepo, times(1)).getTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType);
     }
 }

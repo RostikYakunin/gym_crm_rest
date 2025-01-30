@@ -20,9 +20,6 @@ public interface TrainerMapper {
     TrainingView toTrainingView(Training training);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "userName", ignore = true)
     @Mapping(target = "trainings", ignore = true)
     Trainer toTrainer(TrainerDto trainerDto);
 
@@ -31,6 +28,6 @@ public interface TrainerMapper {
     void updateTrainer(@MappingTarget Trainer existingTrainer, Trainer updatedTrainer);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "isActive", constant = "true")
+    @Mapping(target = "isActive", source = "active")
     TrainerDto toDto(Trainer trainer);
 }

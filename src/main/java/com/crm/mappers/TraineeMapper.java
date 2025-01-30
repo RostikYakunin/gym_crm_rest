@@ -14,11 +14,7 @@ import java.util.stream.Collectors;
 @Mapper(componentModel = "spring")
 public interface TraineeMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "userName", ignore = true)
-    @Mapping(target = "password", ignore = true)
     @Mapping(target = "trainings", ignore = true)
-    @Mapping(target = "isActive", constant = "true")
     Trainee toTrainee(TraineeDto traineeDto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -26,7 +22,6 @@ public interface TraineeMapper {
     TraineeDto toDto(Trainee trainee);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "active", constant = "true")
     @Mapping(target = "trainings", ignore = true)
     void updateTrainee(@MappingTarget Trainee existingTrainee, Trainee updatedTrainee);
 

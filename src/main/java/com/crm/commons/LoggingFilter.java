@@ -19,7 +19,7 @@ public class LoggingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
 
-        String transactionId = (String) request.getAttribute(TRANSACTION_ID);
+        var transactionId = (String) request.getAttribute(TRANSACTION_ID);
         if (transactionId == null) {
             transactionId = UUID.randomUUID().toString();
             request.setAttribute(TRANSACTION_ID, transactionId);
@@ -29,7 +29,7 @@ public class LoggingFilter extends OncePerRequestFilter {
         log.info("[{}] Incoming request: {} {}", transactionId, request.getMethod(), request.getRequestURI());
         filterChain.doFilter(request, response);
 
-        log.info("[{}] Response: {} {}", transactionId, response.getStatus(), response.getContentType());
+        log.info("[{}] Response: {} {}\n", transactionId, response.getStatus(), response.getContentType());
         MDC.remove(TRANSACTION_ID);
     }
 }

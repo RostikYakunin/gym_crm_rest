@@ -9,8 +9,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Optional;
-
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
@@ -31,7 +29,7 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
 
     @Override
     public T findByUsernameOrThrow(String userName) {
-        return Optional.ofNullable(findByUsername(userName))
+        return repository.findByUserName(userName)
                 .orElseThrow(() -> new EntityNotFoundException("Entity with username " + userName + " not found"));
     }
 
@@ -57,19 +55,15 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         entity.setPassword(UserUtils.hashPassword(entity.getPassword()));
         entity.setActive(true);
 
-        var savedTrainer = repository.save(entity);
-        log.info("Entity with id={} was successfully saved", savedTrainer.getId());
-
-        return savedTrainer;
+        return repository.save(entity);
     }
 
     @Override
     public T update(T entity) {
         log.info("Starting updating entity...");
-        var updatedEntity = repository.update(entity);
-        log.info("Entity with id={} was successfully updated", updatedEntity.getId());
+        entity.setPassword(UserUtils.hashPassword(entity.getPassword()));
+        return repository.update(entity);
 
-        return updatedEntity;
     }
 
     @Override
@@ -83,8 +77,6 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
         log.info("Changing password for entity...");
         entity.setPassword(UserUtils.hashPassword(newPassword));
         repository.update(entity);
-
-        log.info("Password changing successfully completed");
         return true;
     }
 
@@ -92,28 +84,24 @@ public abstract class AbstractUserService<T extends User, R extends UserRepo<T>>
     public boolean activateStatus(long id) {
         log.info("Activating status for entity with id={}", id);
 
-        var foundEntity = repository.findById(id);
-        if (foundEntity.isPresent()) {
-            var entity = foundEntity.get();
-            entity.setActive(true);
-            return repository.update(entity).isActive();
-        }
-
-        return false;
+        return repository.findById(id)
+                .map(entity -> {
+                    entity.setActive(true);
+                    return repository.update(entity).isActive();
+                })
+                .orElse(false);
     }
 
     @Override
     public boolean deactivateStatus(long id) {
         log.info("Deactivating status for entity with id={}", id);
 
-        var foundEntity = repository.findById(id);
-        if (foundEntity.isPresent()) {
-            var entity = foundEntity.get();
-            entity.setActive(false);
-            return repository.update(entity).isActive();
-        }
-
-        return false;
+        return repository.findById(id)
+                .map(entity -> {
+                    entity.setActive(false);
+                    return repository.update(entity).isActive();
+                })
+                .orElse(false);
     }
 
     @Override

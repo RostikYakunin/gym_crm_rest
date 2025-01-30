@@ -4,14 +4,21 @@ import com.crm.UnitTestBase;
 import com.crm.models.TrainingType;
 import com.crm.repositories.TrainerRepo;
 import com.crm.repositories.entities.Trainer;
+import com.crm.repositories.entities.Training;
 import com.crm.utils.UserUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
+import java.time.LocalDate;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -170,5 +177,84 @@ class TrainerServiceImplTest extends UnitTestBase {
         assertFalse(result2);
         assertFalse(result3);
         verify(trainerRepo, times(3)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should find user by user name and nothing was thrown")
+    void findByUsernameOrThrow_ShouldReturnEntity_WhenUserExists() {
+        // Given
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.of(testTrainer));
+
+        // When
+
+        var actualUser = assertDoesNotThrow(
+                () -> trainerService.findByUsernameOrThrow(testTrainee.getUserName())
+        );
+
+        // Then
+        assertNotNull(actualUser);
+        assertEquals(testTrainer, actualUser);
+        verify(trainerRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException when nothing was found")
+    void findByUsernameOrThrow_ShouldThrowException_WhenUserNotFound() {
+        // Given
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> trainerService.findByUsernameOrThrow("username"),
+                "Entity with username username not found"
+        );
+
+        verify(trainerRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "trainee1, 2",
+            "trainee2, 0"
+    })
+    @DisplayName("Should return/not return list of assigned trainers")
+    void getUnassignedTrainersByTraineeUsername_ShouldReturnCorrectData(String traineeUsername, int expectedSize) {
+        // Given
+        List<Trainer> expectedTrainers = expectedSize > 0 ? List.of(mock(Trainer.class), mock(Trainer.class)) : Collections.emptyList();
+
+        when(trainerRepo.getUnassignedTrainersByTraineeUsername(traineeUsername)).thenReturn(expectedTrainers);
+
+        // When
+        var actualTrainers = trainerService.getUnassignedTrainersByTraineeUsername(traineeUsername);
+
+        // Then
+        assertNotNull(actualTrainers);
+        assertEquals(expectedSize, actualTrainers.size());
+        verify(trainerRepo, times(1)).getUnassignedTrainersByTraineeUsername(traineeUsername);
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "trainer1, trainee1, YOGA, 1",
+            "trainer2, trainee2, YOGA, 0"
+    })
+    @DisplayName("Should find/not find list trainings")
+    void findTrainerTrainingsByCriteria_ShouldReturnCorrectData(String trainerUsername, String traineeUsername, TrainingType trainingType, int expectedSize) {
+        // Given
+        var fromDate = LocalDate.of(2024, 1, 1);
+        var toDate = LocalDate.of(2024, 12, 31);
+        List<Training> expectedTrainings = expectedSize > 0 ? List.of(mock(Training.class)) : Collections.emptyList();
+
+        when(trainerRepo.getTrainerTrainingsByCriteria(trainerUsername, fromDate, toDate, traineeUsername, trainingType))
+                .thenReturn(expectedTrainings);
+
+        // When
+        var actualTrainings = trainerService.findTrainerTrainingsByCriteria(trainerUsername, fromDate, toDate, traineeUsername, trainingType);
+
+        // Then
+        assertNotNull(actualTrainings);
+        assertEquals(expectedSize, actualTrainings.size());
+        verify(trainerRepo, times(1)).getTrainerTrainingsByCriteria(trainerUsername, fromDate, toDate, traineeUsername, trainingType);
     }
 }
