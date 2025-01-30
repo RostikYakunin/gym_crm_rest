@@ -3,7 +3,9 @@ package com.crm.resources;
 import com.crm.UnitTestBase;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainer.*;
+import com.crm.dtos.trainer.TrainerDto;
+import com.crm.dtos.trainer.TrainerShortView;
+import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TrainerMapper;
 import com.crm.mappers.TrainingMapper;
@@ -77,19 +79,19 @@ class TrainerControllerTest extends UnitTestBase {
             String firstName, String lastName, String password, String trainingType
     ) throws Exception {
         // Given
-        TrainerSaveDto trainerDto = new TrainerSaveDto();
+        var trainerDto = new TrainerDto();
         trainerDto.setFirstName(firstName);
         trainerDto.setLastName(lastName);
         trainerDto.setPassword(password);
-        trainerDto.setTrainingType(trainingType.isEmpty() ? null : TrainingType.valueOf(trainingType));
+        trainerDto.setSpecialization(trainingType.isEmpty() ? null : TrainingType.valueOf(trainingType));
 
-        Trainer trainer = new Trainer();
-        TrainerDto trainerResponseDto = new TrainerDto();
+        var trainer = new Trainer();
+        var trainerResponseDto = new TrainerDto();
 
         if (!firstName.isEmpty() && !lastName.isEmpty() && !password.isEmpty() && !trainingType.isEmpty()) {
-            when(trainerMapper.toTrainer(trainerDto)).thenReturn(trainer);
-            when(trainerService.save(trainer)).thenReturn(trainer);
-            when(trainerMapper.toDto(trainer)).thenReturn(trainerResponseDto);
+            when(trainerMapper.toTrainer(any(TrainerDto.class))).thenReturn(trainer);
+            when(trainerService.save(any(Trainer.class))).thenReturn(trainer);
+            when(trainerMapper.toDto(any(Trainer.class))).thenReturn(trainerResponseDto);
 
             //When - Then
             mockMvc.perform(post("/api/v1/trainer")
@@ -174,19 +176,18 @@ class TrainerControllerTest extends UnitTestBase {
             "John, Doe, user1, YOGA, true",
             "'', Doe, user1, YOGA, true",
             "John, '', user1, YOGA, true",
-            "John, Doe, '', YOGA, true",
             "John, Doe, user1, '', true",
-            "John, Doe, user1, YOGA, ''"
     })
     @DisplayName("Should update/not update trainer`s profile according to data")
     void updateTrainer_ShouldHandleVariousInputs(
             String firstName, String lastName, String userName, String specialization, String isActive
     ) throws Exception {
         // Given
-        var updateDto = TrainerUpdateDto.builder()
+        var updateDto = TrainerDto.builder()
                 .firstName(firstName)
                 .lastName(lastName)
                 .userName(userName)
+                .password("Pass234")
                 .specialization(specialization.isEmpty() ? null : TrainingType.valueOf(specialization))
                 .isActive(isActive.isEmpty() ? null : Boolean.parseBoolean(isActive))
                 .build();
@@ -196,7 +197,7 @@ class TrainerControllerTest extends UnitTestBase {
 
         if (!firstName.isEmpty() && !lastName.isEmpty() && !userName.isEmpty() && !specialization.isEmpty() && !isActive.isEmpty()) {
             when(trainerService.findById(anyLong())).thenReturn(trainer);
-            when(trainerMapper.toTrainer(any(TrainerUpdateDto.class))).thenReturn(trainer);
+            when(trainerMapper.toTrainer(any(TrainerDto.class))).thenReturn(trainer);
             when(trainerService.update(any(Trainer.class))).thenReturn(trainer);
             when(trainerMapper.toTrainerView(any(Trainer.class))).thenReturn(trainerView);
 

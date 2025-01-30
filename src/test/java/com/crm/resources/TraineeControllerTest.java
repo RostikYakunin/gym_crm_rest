@@ -3,9 +3,8 @@ package com.crm.resources;
 import com.crm.UnitTestBase;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainee.TraineeSaveDto;
+import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
-import com.crm.dtos.trainee.TraineeUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingShortView;
@@ -16,6 +15,8 @@ import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
 import com.crm.services.TraineeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import jakarta.servlet.ServletException;
 import org.apache.coyote.BadRequestException;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.springframework.http.MediaType;
+import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
@@ -63,38 +65,49 @@ class TraineeControllerTest extends UnitTestBase {
     @Captor
     private ArgumentCaptor<String> stringArgumentCaptor;
 
+    @Captor
+    private ArgumentCaptor<TraineeDto> traineeDtoArgumentCaptor;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders.standaloneSetup(traineeController).build();
+        objectMapper.registerModule(new JavaTimeModule());
+        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
+
+        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
+        jsonConverter.setObjectMapper(objectMapper);
+
+        mockMvc = MockMvcBuilders.standaloneSetup(traineeController)
+                .setMessageConverters(jsonConverter)
+                .build();
     }
 
     @Test
     @DisplayName("Should successfully create trainee")
     void shouldRegisterTraineeSuccessfully() throws Exception {
         // Given
-        when(traineeMapper.toTrainee(any(TraineeSaveDto.class))).thenReturn(testTrainee);
+        when(traineeMapper.toTrainee(any(TraineeDto.class))).thenReturn(testTrainee);
         when(traineeService.save(any(Trainee.class))).thenReturn(testTrainee);
         when(traineeMapper.toDto(any(Trainee.class))).thenReturn(testTraineeDto);
 
         // When - Then
         mockMvc.perform(post("/api/v1/trainee")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(testTraineeSaveDto)))
+                        .content(objectMapper.writeValueAsString(testTraineeDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userName").value(testTraineeDto.getUserName()))
                 .andExpect(jsonPath("$.password").value(testTraineeDto.getPassword()));
 
-        verify(traineeMapper, times(1)).toTrainee(traineeSaveDtoArgumentCaptor.capture());
+        verify(traineeMapper, times(1)).toTrainee(traineeDtoArgumentCaptor.capture());
         verify(traineeService, times(1)).save(traineeArgumentCaptor.capture());
         verify(traineeMapper, times(1)).toDto(traineeArgumentCaptor.capture());
     }
 
     @ParameterizedTest
     @CsvSource({
-            "user1, oldPas1, newPas1, true, 200, 'Password successfully changed'",
-            "user2, oldPas2, newPas2, false, 400, 'Password was not changed: inputted password is wrong'"
+            "user1, oldPas1, newPas1, true, 200, '\"Password successfully changed\"'",
+            "user2, oldPas2, newPas2, false, 400, '\"Password was not changed: inputted password is wrong\"'"
     })
     @DisplayName("Should successfully change/not change trainee`s password")
     void shouldChangePasswordSuccessfully(
@@ -325,8 +338,8 @@ class TraineeControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "user1, true, 200, 'Trainee with username=user1 was activated.'",
-            "user2, false, 200, 'Trainee with username=user2 was deactivated.'",
+            "user1, true, 200, '\"Trainee with username=user1 was activated.\"'",
+            "user2, false, 200, '\"Trainee with username=user2 was deactivated.\"'",
     })
     @DisplayName("Should update/not update trainee`s status according to data")
     void shouldUpdateTraineeStatusWithValidData(String username, boolean isActive, int expectedStatus, String expectedMessage) throws Exception {
@@ -357,15 +370,16 @@ class TraineeControllerTest extends UnitTestBase {
     @DisplayName("Should update/not update trainee according to data")
     void testUpdateTrainee(String existingUsername, String inputUsername, int expectedStatus) throws Exception {
         // Given
-        var updateDto = TraineeUpdateDto.builder()
+        var updateDto = TraineeDto.builder()
                 .firstName("newFirstName")
                 .lastName("newLastName")
                 .userName(inputUsername)
+                .password("Pas2345")
                 .isActive(true)
                 .build();
 
         testTrainee.setUserName(existingUsername);
-        when(traineeService.findById(anyLong())).thenReturn(testTrainee);
+        lenient().when(traineeService.findById(anyLong())).thenReturn(testTrainee);
 
         if (expectedStatus == 200) {
             var traineeViewDto = TraineeView.builder()
@@ -373,6 +387,8 @@ class TraineeControllerTest extends UnitTestBase {
                     .lastName("newLastName")
                     .build();
 
+            when(traineeMapper.toTrainee(any(TraineeDto.class))).thenReturn(testTrainee);
+            doNothing().when(traineeMapper).updateTrainee(any(Trainee.class), any(Trainee.class));
             when(traineeService.update(any(Trainee.class))).thenReturn(testTrainee);
             when(traineeMapper.toTraineeView(any(Trainee.class))).thenReturn(traineeViewDto);
         }

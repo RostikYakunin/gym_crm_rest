@@ -1,7 +1,5 @@
 package com.crm.mappers;
 
-import com.crm.dtos.trainee.TraineeSaveDto;
-import com.crm.dtos.trainee.TraineeUpdateDto;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
@@ -19,34 +17,6 @@ import static org.junit.jupiter.api.Assertions.*;
 class TraineeMapperTest {
 
     private final TraineeMapper traineeMapper = Mappers.getMapper(TraineeMapper.class);
-
-    @Test
-    @DisplayName("Should map to Trainee from TraineeSaveDto")
-    void testToTraineeFromTraineeSaveDto() {
-        // Given
-        var traineeSaveDto = TraineeSaveDto.builder()
-                .firstName("John")
-                .lastName("Doe")
-                .password("Password123")
-                .dateOfBirth(LocalDate.of(1990, 1, 1))
-                .address("123 Main St")
-                .build();
-
-        // When
-        var trainee = traineeMapper.toTrainee(traineeSaveDto);
-
-        // Then
-        assertNotNull(trainee);
-        assertEquals("John", trainee.getFirstName());
-        assertEquals("Doe", trainee.getLastName());
-        assertEquals(LocalDate.of(1990, 1, 1), trainee.getDateOfBirth());
-        assertEquals("123 Main St", trainee.getAddress());
-        assertTrue(trainee.isActive());
-        assertNull(trainee.getId());
-        assertNull(trainee.getUserName());
-        assertNull(trainee.getPassword());
-        assertTrue(trainee.getTrainings().isEmpty());
-    }
 
     @Test
     @DisplayName("Should map to TraineeDto from Trainee")
@@ -114,34 +84,6 @@ class TraineeMapperTest {
         assertEquals("johndoe", existingTrainee.getUserName());
         assertEquals("Password123", existingTrainee.getPassword());
         assertTrue(existingTrainee.isActive());
-    }
-
-    @Test
-    @DisplayName("Should map from TraineeUpdateDto to Trainee")
-    void testToTraineeFromTraineeUpdateDto() {
-        // Given
-        var traineeUpdateDto = TraineeUpdateDto.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .userName("janesmith")
-                .dateOfBirth(LocalDate.of(1995, 5, 5))
-                .address("456 Elm St")
-                .isActive(true)
-                .build();
-
-        // When
-        var trainee = traineeMapper.toTrainee(traineeUpdateDto);
-
-        // Then
-        assertNotNull(trainee);
-        assertEquals("Jane", trainee.getFirstName());
-        assertEquals("Smith", trainee.getLastName());
-        assertEquals(LocalDate.of(1995, 5, 5), trainee.getDateOfBirth());
-        assertEquals("456 Elm St", trainee.getAddress());
-        assertTrue(trainee.isActive());
-        assertNull(trainee.getId());
-        assertNull(trainee.getPassword());
-        assertTrue(trainee.getTrainings().isEmpty());
     }
 
     @Test

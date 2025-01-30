@@ -1,6 +1,8 @@
 package com.crm.mappers;
 
-import com.crm.dtos.trainer.*;
+import com.crm.dtos.trainer.TrainerDto;
+import com.crm.dtos.trainer.TrainerShortView;
+import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingView;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
@@ -20,20 +22,13 @@ public interface TrainerMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "password", ignore = true)
-    @Mapping(target = "trainings", ignore = true)
-    Trainer toTrainer(TrainerUpdateDto updateDto);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    TrainerShortView toTrainerShortView(Trainer trainer);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "specialization", source = "trainingType")
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "userName", ignore = true)
     @Mapping(target = "trainings", ignore = true)
-    Trainer toTrainer(TrainerSaveDto trainerDto);
+    Trainer toTrainer(TrainerDto trainerDto);
+
+    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+    TrainerShortView toTrainerShortView(Trainer trainer);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "trainings", ignore = true)

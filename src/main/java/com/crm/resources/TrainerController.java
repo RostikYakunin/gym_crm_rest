@@ -2,7 +2,9 @@ package com.crm.resources;
 
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainer.*;
+import com.crm.dtos.trainer.TrainerDto;
+import com.crm.dtos.trainer.TrainerShortView;
+import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TrainerMapper;
 import com.crm.mappers.TrainingMapper;
@@ -46,7 +48,7 @@ public class TrainerController {
             }
     )
     @PostMapping
-    public ResponseEntity<TrainerDto> registerTrainer(@RequestBody @Valid TrainerSaveDto trainerDto) {
+    public ResponseEntity<TrainerDto> registerTrainer(@RequestBody @Valid TrainerDto trainerDto) {
         var trainer = trainerMapper.toTrainer(trainerDto);
         var savedTrainer = trainerService.save(trainer);
 
@@ -119,7 +121,7 @@ public class TrainerController {
     @PutMapping("/{id}")
     public ResponseEntity<TrainerView> updateTrainer(
             @PathVariable("id") Long id,
-            @RequestBody @Valid TrainerUpdateDto updateDto
+            @RequestBody @Valid TrainerDto updateDto
     ) {
         var existingTrainer = Optional.ofNullable(trainerService.findById(id))
                 .orElseThrow(() -> new EntityNotFoundException("Trainee with user name=" + updateDto.getUserName() + " not found."));

@@ -2,7 +2,9 @@ package com.crm.resources;
 
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
-import com.crm.dtos.trainee.*;
+import com.crm.dtos.trainee.TraineeDto;
+import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
+import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingShortView;
 import com.crm.mappers.TraineeMapper;
 import com.crm.mappers.TrainingMapper;
@@ -49,7 +51,7 @@ public class TraineeController {
             }
     )
     @PostMapping
-    public ResponseEntity<TraineeDto> registerTrainee(@RequestBody @Valid TraineeSaveDto traineeDto) {
+    public ResponseEntity<TraineeDto> registerTrainee(@RequestBody @Valid TraineeDto traineeDto) {
         var trainee = traineeMapper.toTrainee(traineeDto);
         var savedTrainee = traineeService.save(trainee);
 
@@ -123,7 +125,7 @@ public class TraineeController {
     @PutMapping("/{id}")
     public ResponseEntity<TraineeView> updateTrainee(
             @PathVariable("id") Long id,
-            @RequestBody @Valid TraineeUpdateDto updateDto
+            @RequestBody @Valid TraineeDto updateDto
     ) {
         var existingTrainee = Optional.ofNullable(traineeService.findById(id))
                 .orElseThrow(() -> new EntityNotFoundException("Trainee with user name=" + updateDto.getUserName() + " not found."));
@@ -179,7 +181,7 @@ public class TraineeController {
             }
     )
     @PutMapping("/trainings")
-    public ResponseEntity<Set<TrainingShortView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) throws BadRequestException {
+    public ResponseEntity<Set<TrainingShortView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) {
         var foundTrainee = traineeService.findByUsernameOrThrow(updateDto.getUserName());
 
         boolean containsInvalidTrainings = updateDto.getTrainings()

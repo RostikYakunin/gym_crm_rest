@@ -3,7 +3,6 @@ package com.crm.dtos.trainee;
 import com.crm.dtos.UserDto;
 import com.crm.repositories.entities.Training;
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Past;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -26,7 +25,6 @@ public class TraineeDto extends UserDto {
     @Size(min = 5, max = 255, message = "Address must be between 5 and 255 characters")
     private String address;
 
-    @NotNull(message = "Trainings list cannot be null")
     @Builder.Default
     private Set<Training> trainings = new HashSet<>();
 }

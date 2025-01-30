@@ -161,8 +161,8 @@ class TrainerServiceImplTest extends UnitTestBase {
                 .thenReturn(Optional.empty());
 
         // When
-        var result1 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUserName(), "testPassword1");
-        var result2 = trainerService.isUsernameAndPasswordMatching(testTrainee.getUserName(), "wrongPassword");
+        var result1 = trainerService.isUsernameAndPasswordMatching(testTrainer.getUserName(), "Pasw3456");
+        var result2 = trainerService.isUsernameAndPasswordMatching(testTrainer.getUserName(), "wrongPassword");
         var result3 = trainerService.isUsernameAndPasswordMatching("unknownUser", "testPassword");
 
         // Then

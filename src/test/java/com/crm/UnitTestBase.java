@@ -1,7 +1,6 @@
 package com.crm;
 
 import com.crm.dtos.trainee.TraineeDto;
-import com.crm.dtos.trainee.TraineeSaveDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
@@ -27,14 +26,12 @@ public abstract class UnitTestBase {
     protected ArgumentCaptor<Trainer> trainerArgumentCaptor;
     @Captor
     protected ArgumentCaptor<Long> idArgumentCaptor;
-    @Captor
-    protected ArgumentCaptor<TraineeSaveDto> traineeSaveDtoArgumentCaptor;
+
 
     // objects for tests
     protected Training testTraining;
     protected Trainee testTrainee;
     protected Trainer testTrainer;
-    protected TraineeSaveDto testTraineeSaveDto;
     protected TraineeDto testTraineeDto;
     protected TraineeView testTraineeView;
 
@@ -56,7 +53,7 @@ public abstract class UnitTestBase {
                 .firstName("testName1")
                 .lastName("testLastName1")
                 .userName("testName1.testLastName1")
-                .password("testPassword1")
+                .password("Pasw3456")
                 .isActive(true)
                 .specialization(TrainingType.FITNESS)
                 .build();
@@ -71,19 +68,12 @@ public abstract class UnitTestBase {
                 .trainingType(TrainingType.FITNESS)
                 .build();
 
-        testTraineeSaveDto = TraineeSaveDto.builder()
-                .firstName("firstName")
-                .lastName("lastName")
-                .password("paSsw2347")
-                .address("address")
-                .build();
-
         testTraineeDto = TraineeDto.builder()
                 .id(1L)
                 .firstName("testName")
                 .lastName("testLastName")
                 .userName("testName.testLastName")
-                .password("testPassword")
+                .password("Pasrd123")
                 .isActive(true)
                 .address("testAddress")
                 .dateOfBirth(LocalDate.parse("1999-10-10"))
@@ -95,7 +85,6 @@ public abstract class UnitTestBase {
         testTraining = null;
         testTrainee = null;
         testTrainer = null;
-        testTraineeSaveDto = null;
         testTraineeView = null;
         testTraineeDto = null;
     }

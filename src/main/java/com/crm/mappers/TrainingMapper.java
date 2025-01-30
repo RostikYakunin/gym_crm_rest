@@ -2,9 +2,7 @@ package com.crm.mappers;
 
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingShortView;
-import com.crm.dtos.training.TrainingTypeView;
 import com.crm.dtos.training.TrainingView;
-import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Training;
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
@@ -24,9 +22,6 @@ public interface TrainingMapper {
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
     Training toTraining(TrainingDto trainingDto);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    TrainingTypeView toTrainingTypeView(TrainingType training);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "traineeId", source = "trainee.id")

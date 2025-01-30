@@ -2,12 +2,9 @@ package com.crm.resources;
 
 import com.crm.UnitTestBase;
 import com.crm.dtos.training.TrainingDto;
-import com.crm.dtos.training.TrainingTypeView;
 import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
-import com.crm.repositories.entities.Trainee;
-import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
 import com.crm.services.TrainingService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -32,7 +29,8 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 
 class TrainingControllerTest extends UnitTestBase {
@@ -102,7 +100,7 @@ class TrainingControllerTest extends UnitTestBase {
             mockMvc.perform(post("/api/v1/training")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(trainingDto)))
-                    .andExpect(status().isOk())
+                    .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(trainingView.getId()));
         } else {
             mockMvc.perform(post("/api/v1/training")

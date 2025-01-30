@@ -1,8 +1,6 @@
 package com.crm.mappers;
 
 import com.crm.dtos.trainee.TraineeDto;
-import com.crm.dtos.trainee.TraineeSaveDto;
-import com.crm.dtos.trainee.TraineeUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
@@ -21,7 +19,7 @@ public interface TraineeMapper {
     @Mapping(target = "password", ignore = true)
     @Mapping(target = "trainings", ignore = true)
     @Mapping(target = "isActive", constant = "true")
-    Trainee toTrainee(TraineeSaveDto traineeSaveDto);
+    Trainee toTrainee(TraineeDto traineeDto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "isActive", source = "active")
@@ -31,12 +29,6 @@ public interface TraineeMapper {
     @Mapping(target = "active", constant = "true")
     @Mapping(target = "trainings", ignore = true)
     void updateTrainee(@MappingTarget Trainee existingTrainee, Trainee updatedTrainee);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    @Mapping(target = "id", ignore = true)
-    @Mapping(target = "password", ignore = true)
-    @Mapping(target = "trainings", ignore = true)
-    Trainee toTrainee(TraineeUpdateDto traineeUpdateDto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(source = "active", target = "isActive")

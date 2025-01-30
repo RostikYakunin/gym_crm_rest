@@ -1,7 +1,5 @@
 package com.crm.mappers;
 
-import com.crm.dtos.trainer.TrainerSaveDto;
-import com.crm.dtos.trainer.TrainerUpdateDto;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
@@ -77,32 +75,6 @@ class TrainerMapperTest {
     }
 
     @Test
-    @DisplayName("Should map from TrainerUpdateDto to Trainer")
-    void testToTrainerFromTrainerUpdateDto() {
-        // Given
-        var trainerUpdateDto = TrainerUpdateDto.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .userName("janesmith")
-                .specialization(TrainingType.YOGA)
-                .isActive(true)
-                .build();
-
-        // When
-        var trainer = trainerMapper.toTrainer(trainerUpdateDto);
-
-        // Then
-        assertNotNull(trainer);
-        assertEquals("Jane", trainer.getFirstName());
-        assertEquals("Smith", trainer.getLastName());
-        assertEquals(TrainingType.YOGA, trainer.getSpecialization());
-        assertTrue(trainer.isActive());
-        assertNull(trainer.getId());
-        assertNull(trainer.getPassword());
-        assertTrue(trainer.getTrainings().isEmpty());
-    }
-
-    @Test
     @DisplayName("Should map from Trainer to TrainerShortView")
     void testToTrainerShortView() {
         // Given
@@ -122,31 +94,6 @@ class TrainerMapperTest {
         assertEquals("Doe", trainerShortView.getLastName());
         assertEquals("johndoe", trainerShortView.getUserName());
         assertEquals(TrainingType.YOGA, trainerShortView.getSpecialization());
-    }
-
-    @Test
-    @DisplayName("Should map from TrainerSaveDto to Trainer")
-    void testToTrainerFromTrainerSaveDto() {
-        // Given
-        var trainerSaveDto = TrainerSaveDto.builder()
-                .firstName("Jane")
-                .lastName("Smith")
-                .password("Password123")
-                .trainingType(TrainingType.YOGA)
-                .build();
-
-        // When
-        var trainer = trainerMapper.toTrainer(trainerSaveDto);
-
-        // Then
-        assertNotNull(trainer);
-        assertEquals("Jane", trainer.getFirstName());
-        assertEquals("Smith", trainer.getLastName());
-        assertEquals(TrainingType.YOGA, trainer.getSpecialization());
-        assertNull(trainer.getId());
-        assertNull(trainer.getUserName());
-        assertNotNull(trainer.getPassword());
-        assertTrue(trainer.getTrainings().isEmpty());
     }
 
     @Test

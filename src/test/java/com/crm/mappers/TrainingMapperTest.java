@@ -76,21 +76,6 @@ class TrainingMapperTest {
     }
 
     @Test
-    @DisplayName("Should map from TrainingType to TrainingTypeView")
-    void testToTrainingTypeView() {
-        // Given
-        var trainingType = TrainingType.YOGA;
-
-        // When
-        var trainingTypeView = trainingMapper.toTrainingTypeView(trainingType);
-
-        // Then
-        assertNotNull(trainingTypeView);
-        assertEquals(2, trainingTypeView.getId());
-        assertEquals("Yoga", trainingTypeView.getName());
-    }
-
-    @Test
     @DisplayName("Should map from Training to TrainingView")
     void testToTrainingView() {
         // Given

@@ -1,7 +1,6 @@
 package com.crm.resources;
 
 import com.crm.dtos.training.TrainingDto;
-import com.crm.dtos.training.TrainingTypeView;
 import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
@@ -12,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -42,7 +42,7 @@ public class TrainingController {
     @PostMapping
     public ResponseEntity<TrainingView> addTraining(@RequestBody @Valid TrainingDto trainingDto) {
         var training = trainingMapper.toTraining(trainingDto);
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.CREATED).body(
                 trainingMapper.toTrainingView(
                         trainingService.save(training)
                 )
@@ -60,11 +60,9 @@ public class TrainingController {
                     @ApiResponse(responseCode = "500", description = "Internal Server Error")
             })
     @GetMapping("/types")
-    public ResponseEntity<List<TrainingTypeView>> getTrainingTypes() {
+    public ResponseEntity<List<TrainingType>> getTrainingTypes() {
         return ResponseEntity.ok(
-                Arrays.stream(TrainingType.values())
-                        .map(trainingMapper::toTrainingTypeView)
-                        .toList()
+                Arrays.asList(TrainingType.values())
         );
     }
 }
