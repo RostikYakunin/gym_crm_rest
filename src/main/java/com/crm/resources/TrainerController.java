@@ -3,11 +3,11 @@ package com.crm.resources;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainer.TrainerDto;
-import com.crm.dtos.trainer.TrainerShortView;
 import com.crm.dtos.trainer.TrainerView;
-import com.crm.dtos.training.TrainingShortView;
+import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TrainerMapper;
 import com.crm.mappers.TrainingMapper;
+import com.crm.models.TrainingType;
 import com.crm.services.TrainerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -149,11 +149,11 @@ public class TrainerController {
             }
     )
     @GetMapping("/unassigned/{username}")
-    public ResponseEntity<List<TrainerShortView>> getNotAssignedTrainers(@PathVariable("username") String username) {
+    public ResponseEntity<List<TrainerDto>> getNotAssignedTrainers(@PathVariable("username") String username) {
         return ResponseEntity.ok(
                 trainerService.getUnassignedTrainersByTraineeUsername(username)
                         .stream()
-                        .map(trainerMapper::toTrainerShortView)
+                        .map(trainerMapper::toDto)
                         .toList()
         );
     }
@@ -175,21 +175,23 @@ public class TrainerController {
             }
     )
     @GetMapping("/trainings")
-    public ResponseEntity<List<TrainingShortView>> getTrainerTrainings(
+    public ResponseEntity<List<TrainingView>> getTrainerTrainings(
             @RequestParam("username") String username,
             @RequestParam(value = "period-from", required = false) LocalDate periodFrom,
             @RequestParam(value = "period-to", required = false) LocalDate periodTo,
-            @RequestParam(value = "trainee-username", required = false) String traineeUserName
+            @RequestParam(value = "trainee-username", required = false) String traineeUserName,
+            @RequestParam(name = "training-type", required = false) String trainingType
     ) {
         return ResponseEntity.ok(
                 trainerService.findTrainerTrainingsByCriteria(
                                 username,
                                 periodFrom,
                                 periodTo,
-                                traineeUserName
+                                traineeUserName,
+                                trainingType != null ? TrainingType.valueOf(trainingType) : null
                         )
                         .stream()
-                        .map(trainingMapper::toTrainingShortView)
+                        .map(trainingMapper::toTrainingView)
                         .toList()
         );
     }

@@ -5,7 +5,7 @@ import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
-import com.crm.dtos.training.TrainingShortView;
+import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TraineeMapper;
 import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
@@ -17,7 +17,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.apache.coyote.BadRequestException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -181,7 +180,7 @@ public class TraineeController {
             }
     )
     @PutMapping("/trainings")
-    public ResponseEntity<Set<TrainingShortView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) {
+    public ResponseEntity<Set<TrainingView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) {
         var foundTrainee = traineeService.findByUsernameOrThrow(updateDto.getUserName());
 
         boolean containsInvalidTrainings = updateDto.getTrainings()
@@ -203,7 +202,7 @@ public class TraineeController {
                 traineeService.update(foundTrainee)
                         .getTrainings()
                         .stream()
-                        .map(trainingMapper::toTrainingShortView)
+                        .map(trainingMapper::toTrainingView)
                         .collect(Collectors.toSet())
         );
     }
@@ -228,7 +227,7 @@ public class TraineeController {
             }
     )
     @GetMapping("/trainings")
-    public ResponseEntity<Set<TrainingShortView>> getTraineeTrainings(
+    public ResponseEntity<Set<TrainingView>> getTraineeTrainings(
             @RequestParam("username") String username,
             @RequestParam(name = "period-from", required = false) LocalDate periodFrom,
             @RequestParam(name = "period-to", required = false) LocalDate periodTo,
@@ -244,7 +243,7 @@ public class TraineeController {
                                 trainingType != null ? TrainingType.valueOf(trainingType) : null
                         )
                         .stream()
-                        .map(trainingMapper::toTrainingShortView)
+                        .map(trainingMapper::toTrainingView)
                         .collect(Collectors.toSet())
         );
     }

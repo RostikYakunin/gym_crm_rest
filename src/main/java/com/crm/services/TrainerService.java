@@ -12,5 +12,5 @@ public interface TrainerService extends UserService<Trainer> {
 
     List<Trainer> getUnassignedTrainersByTraineeUsername(String traineeUsername);
 
-    List<Training> findTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeUserName);
+    List<Training> findTrainerTrainingsByCriteria(String trainerUsername, LocalDate fromDate, LocalDate toDate, String traineeUserName, TrainingType trainingType);
 }

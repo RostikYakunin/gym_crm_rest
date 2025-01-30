@@ -17,6 +17,7 @@ import java.util.Set;
 public class TrainerView {
     private String firstName;
     private String lastName;
+    private String userName;
     private TrainingType specialization;
     private Boolean isActive;
 

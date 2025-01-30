@@ -7,7 +7,7 @@ import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingDto;
-import com.crm.dtos.training.TrainingShortView;
+import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TraineeMapper;
 import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
@@ -44,6 +44,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class TraineeControllerTest extends UnitTestBase {
@@ -261,16 +262,16 @@ class TraineeControllerTest extends UnitTestBase {
         var periodFrom = periodFromStr == null ? null : LocalDate.parse(periodFromStr);
         var periodTo = periodToStr == null ? null : LocalDate.parse(periodToStr);
         var trainingType = trainingTypeStr == null || trainingTypeStr.isEmpty() ? null : TrainingType.valueOf(trainingTypeStr);
-        var shortView = TrainingShortView.builder()
-                .name("Yoga Class")
-                .date(LocalDateTime.now())
-                .trainerUserName("trainer1")
+        var shortView = TrainingView.builder()
+                .trainingName("Yoga Class")
+                .trainingDate(LocalDateTime.now())
+                .trainerId(1L)
                 .build();
 
         when(traineeService.findTraineeTrainingsByCriteria(
                 eq(username), eq(periodFrom), eq(periodTo), eq(trainerUserName), eq(trainingType)))
                 .thenReturn(List.of(new Training()));
-        when(trainingMapper.toTrainingShortView(any(Training.class))).thenReturn(shortView);
+        when(trainingMapper.toTrainingView(any(Training.class))).thenReturn(shortView);
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainee/trainings")
@@ -280,9 +281,10 @@ class TraineeControllerTest extends UnitTestBase {
                         .param("trainer-user-name", trainerUserName)
                         .param("training-type", trainingTypeStr != null ? trainingTypeStr : ""))
                 .andExpect(status().isOk())
+                .andDo(print())
                 .andExpect(jsonPath("$", hasSize(1)))
-                .andExpect(jsonPath("$[0].name").value(shortView.getName()))
-                .andExpect(jsonPath("$[0].trainerUserName").value(shortView.getTrainerUserName()));
+                .andExpect(jsonPath("$[0].trainingName").value(shortView.getTrainingName()))
+                .andExpect(jsonPath("$[0].trainerId").value(shortView.getTrainerId()));
     }
 
     @ParameterizedTest

@@ -4,9 +4,8 @@ import com.crm.UnitTestBase;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainer.TrainerDto;
-import com.crm.dtos.trainer.TrainerShortView;
 import com.crm.dtos.trainer.TrainerView;
-import com.crm.dtos.training.TrainingShortView;
+import com.crm.dtos.training.TrainingView;
 import com.crm.mappers.TrainerMapper;
 import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
@@ -34,6 +33,7 @@ import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 class TrainerControllerTest extends UnitTestBase {
@@ -224,15 +224,22 @@ class TrainerControllerTest extends UnitTestBase {
             String username, String firstName, String lastName, String trainerUsername, TrainingType specialization
     ) throws Exception {
         //Given
-        var expectedTrainer = new TrainerShortView(firstName, lastName, trainerUsername, specialization);
+        var expectedTrainer = TrainerDto.builder()
+                .firstName(firstName)
+                .lastName(lastName)
+                .userName(trainerUsername)
+                .specialization(specialization)
+                .isActive(true)
+                .build();
 
         when(trainerService.getUnassignedTrainersByTraineeUsername(anyString()))
                 .thenReturn(Collections.singletonList(new Trainer()));
-        when(trainerMapper.toTrainerShortView(any())).thenReturn(expectedTrainer);
+        when(trainerMapper.toDto(any(Trainer.class))).thenReturn(expectedTrainer);
 
         //When - Then
-        mockMvc.perform(get("/api/v1/trainer/unassigned/{username}", username))
+        mockMvc.perform(get("/api/v1/trainer/unassigned/" + username))
                 .andExpect(status().isOk())
+                .andDo(print())
                 .andExpect(jsonPath("$[0].firstName").value(firstName))
                 .andExpect(jsonPath("$[0].lastName").value(lastName))
                 .andExpect(jsonPath("$[0].userName").value(trainerUsername))
@@ -281,12 +288,12 @@ class TrainerControllerTest extends UnitTestBase {
         var periodTo = periodToStr == null ? null : LocalDate.parse(periodToStr);
         var mockTrainings = Collections.nCopies(expectedTrainingsCount, new Training());
 
-        when(trainerService.findTrainerTrainingsByCriteria(username, periodFrom, periodTo, traineeUserName))
+        when(trainerService.findTrainerTrainingsByCriteria(username, periodFrom, periodTo, traineeUserName, TrainingType.YOGA))
                 .thenReturn(mockTrainings);
-        when(trainingMapper.toTrainingShortView(any()))
+        when(trainingMapper.toTrainingView(any()))
                 .thenAnswer(invocation -> {
                     Training training = invocation.getArgument(0);
-                    return new TrainingShortView(training.getTrainingName(), training.getTrainingDate(), training.getTrainingType(), training.getTrainingDuration(), traineeUserName);
+                    return new TrainingView(1L, 1L, 1L, training.getTrainingName(), training.getTrainingType(), training.getTrainingDate(), training.getTrainingDuration());
                 });
 
         // When - Then
@@ -294,7 +301,9 @@ class TrainerControllerTest extends UnitTestBase {
                         .param("username", username)
                         .param("period-from", periodFromStr)
                         .param("period-to", periodToStr)
-                        .param("trainee-username", traineeUserName))
+                        .param("trainee-username", traineeUserName)
+                        .param("training-type", "YOGA")
+                )
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(expectedTrainingsCount));
     }

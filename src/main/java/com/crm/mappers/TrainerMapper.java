@@ -1,7 +1,6 @@
 package com.crm.mappers;
 
 import com.crm.dtos.trainer.TrainerDto;
-import com.crm.dtos.trainer.TrainerShortView;
 import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingView;
 import com.crm.repositories.entities.Trainer;
@@ -26,9 +25,6 @@ public interface TrainerMapper {
     @Mapping(target = "userName", ignore = true)
     @Mapping(target = "trainings", ignore = true)
     Trainer toTrainer(TrainerDto trainerDto);
-
-    @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    TrainerShortView toTrainerShortView(Trainer trainer);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "trainings", ignore = true)

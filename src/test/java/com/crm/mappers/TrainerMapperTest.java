@@ -81,19 +81,19 @@ class TrainerMapperTest {
         var trainer = Trainer.builder()
                 .firstName("John")
                 .lastName("Doe")
-                .userName("johndoe")
+                .userName("john.doe")
                 .specialization(TrainingType.YOGA)
                 .build();
 
         // When
-        var trainerShortView = trainerMapper.toTrainerShortView(trainer);
+        var trainerView = trainerMapper.toTrainerView(trainer);
 
         // Then
-        assertNotNull(trainerShortView);
-        assertEquals("John", trainerShortView.getFirstName());
-        assertEquals("Doe", trainerShortView.getLastName());
-        assertEquals("johndoe", trainerShortView.getUserName());
-        assertEquals(TrainingType.YOGA, trainerShortView.getSpecialization());
+        assertNotNull(trainerView);
+        assertEquals("John", trainerView.getFirstName());
+        assertEquals("Doe", trainerView.getLastName());
+        assertEquals("john.doe", trainerView.getUserName());
+        assertEquals(TrainingType.YOGA, trainerView.getSpecialization());
     }
 
     @Test

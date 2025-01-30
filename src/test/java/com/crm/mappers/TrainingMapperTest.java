@@ -18,34 +18,6 @@ class TrainingMapperTest {
     private final TrainingMapper trainingMapper = Mappers.getMapper(TrainingMapper.class);
 
     @Test
-    @DisplayName("Should map from Training to TrainingShortView")
-    void testToTrainingShortView() {
-        // Given
-        var trainer = Trainer.builder()
-                .userName("trainer_john")
-                .build();
-
-        var training = Training.builder()
-                .trainingName("Morning Run")
-                .trainingDate(LocalDateTime.of(2023, 10, 10, 8, 0))
-                .trainingType(TrainingType.FITNESS)
-                .trainingDuration(Duration.ofHours(1))
-                .trainer(trainer)
-                .build();
-
-        // When
-        var trainingShortView = trainingMapper.toTrainingShortView(training);
-
-        // Then
-        assertNotNull(trainingShortView);
-        assertEquals("Morning Run", trainingShortView.getName());
-        assertEquals(LocalDateTime.of(2023, 10, 10, 8, 0), trainingShortView.getDate());
-        assertEquals(TrainingType.FITNESS, trainingShortView.getType());
-        assertEquals(Duration.ofHours(1), trainingShortView.getDuration());
-        assertEquals("trainer_john", trainingShortView.getTrainerUserName());
-    }
-
-    @Test
     @DisplayName("Should map from TrainingDto to Training")
     void testToTraining() {
         // Given
