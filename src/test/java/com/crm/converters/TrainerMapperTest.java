@@ -1,5 +1,6 @@
-package com.crm.mappers;
+package com.crm.converters;
 
+import com.crm.converters.mappers.TrainerMapper;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;

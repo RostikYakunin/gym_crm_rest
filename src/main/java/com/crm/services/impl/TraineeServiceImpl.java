@@ -5,14 +5,13 @@ import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
 import com.crm.services.TraineeService;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -53,5 +52,21 @@ public class TraineeServiceImpl extends AbstractUserService<Trainee, TraineeRepo
     public List<Training> findTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
         log.info("Starting searching for trainings by criteria... ");
         return repository.getTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUserName, trainingType);
+    }
+
+    @Override
+    public Trainee updateTraineeTrainings(String username, Set<Training> newTrainings) {
+        var foundTrainee = findByUsernameOrThrow(username);
+
+        boolean containsInvalidTrainings = newTrainings
+                .stream()
+                .anyMatch(training -> !training.getTrainee().getId().equals(foundTrainee.getId()));
+
+        if (containsInvalidTrainings) {
+            throw new IllegalArgumentException("Inputted trainings are not belong to user with id=" + foundTrainee.getId());
+        }
+
+        foundTrainee.getTrainings().addAll(newTrainings);
+        return update(foundTrainee);
     }
 }

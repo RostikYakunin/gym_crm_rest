@@ -26,7 +26,7 @@ public class Trainee extends User {
     @Column(name = "address")
     private String address;
 
-    @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "trainee", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Training> trainings = new ArrayList<>();
 }

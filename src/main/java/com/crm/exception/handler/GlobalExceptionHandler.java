@@ -5,6 +5,7 @@ import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.coyote.BadRequestException;
+import org.postgresql.util.PSQLException;
 import org.slf4j.MDC;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -29,8 +30,8 @@ public class GlobalExceptionHandler {
         var transactionId = MDC.get("transactionId");
         log.warn("[{}] Entity not found: {}", transactionId, ex.getMessage());
 
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                .body(ex.getMessage());
+        return ResponseEntity.ok()
+                .body("Entity was deleted");
     }
 
     @ExceptionHandler(BadRequestException.class)
@@ -122,5 +123,14 @@ public class GlobalExceptionHandler {
         log.warn("[{}] Parameters are not correct for this request: {}", transactionId, ex.getMessage());
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
+    }
+
+    @ExceptionHandler(PSQLException.class)
+    public ResponseEntity<String> handleIllegalStateException(PSQLException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] Something went wrong with SQL request: {}", transactionId, ex.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Your request is wrong, please pay attention on your request details");
     }
 }

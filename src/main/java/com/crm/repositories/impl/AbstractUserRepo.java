@@ -18,15 +18,26 @@ public abstract class AbstractUserRepo<T extends User> implements UserRepo<T> {
 
     @Override
     public Optional<T> findById(long id) {
-        log.debug("Start searching entity by id... ");
-        return Optional.ofNullable(entityManager.find(getEntityClass(), id));
+        try {
+            log.debug("Start searching entity by id... ");
+            var query = "SELECT u FROM " + getEntityClassName() + " u " +
+                    "LEFT JOIN FETCH u.trainings WHERE u.id = :id";
+            var user = (T) entityManager.createQuery(query)
+                    .setParameter("id", id)
+                    .getSingleResult();
+            return Optional.ofNullable(user);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            throw new EntityNotFoundException("Entity with id=" + id + " not found");
+        }
     }
 
     @Override
     public Optional<T> findByUserName(String username) {
         try {
             log.debug("Start searching entity by username... ");
-            var query = "SELECT u FROM " + getEntityClassName() + " u WHERE u.userName = :username";
+            var query = "SELECT u FROM " + getEntityClassName() + " u " +
+                    "LEFT JOIN FETCH u.trainings WHERE u.userName = :username";
             var user = (T) entityManager.createQuery(query)
                     .setParameter("username", username)
                     .getSingleResult();

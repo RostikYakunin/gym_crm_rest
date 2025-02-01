@@ -38,12 +38,15 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // When
         var notEmptyResult = traineeRepo.findById(savedId.getId());
-        var emptyResult = traineeRepo.findById(100000L);
+
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeRepo.findById(100000L)
+        );
 
         // Then
         assertTrue(notEmptyResult.isPresent());
         assertEquals(testTrainee.getUserName(), notEmptyResult.get().getUserName());
-        assertTrue(emptyResult.isEmpty());
     }
 
     @Test

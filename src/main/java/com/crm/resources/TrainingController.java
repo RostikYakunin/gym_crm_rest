@@ -2,8 +2,8 @@ package com.crm.resources;
 
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingView;
-import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
+import com.crm.repositories.entities.Training;
 import com.crm.services.TrainingService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ import java.util.List;
 @Tag(name = "Training management", description = "Endpoints for managing trainings.")
 public class TrainingController {
     private final TrainingService trainingService;
-    private final TrainingMapper trainingMapper;
+    private final ConversionService convertor;
 
     @Operation(
             summary = "Add training",
@@ -41,11 +42,9 @@ public class TrainingController {
             })
     @PostMapping
     public ResponseEntity<TrainingView> addTraining(@RequestBody @Valid TrainingDto trainingDto) {
-        var training = trainingMapper.toTraining(trainingDto);
+        var fromDto = convertor.convert(trainingDto, Training.class);
         return ResponseEntity.status(HttpStatus.CREATED).body(
-                trainingMapper.toTrainingView(
-                        trainingService.save(training)
-                )
+                convertor.convert(trainingService.save(fromDto), TrainingView.class)
         );
     }
 

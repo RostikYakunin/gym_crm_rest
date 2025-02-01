@@ -6,8 +6,8 @@ import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingView;
-import com.crm.mappers.TraineeMapper;
-import com.crm.mappers.TrainingMapper;
+import com.crm.converters.mappers.TraineeMapper;
+import com.crm.converters.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
 import com.crm.services.TraineeService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -181,32 +181,20 @@ public class TraineeController {
     )
     @PutMapping("/trainings")
     public ResponseEntity<Set<TrainingView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) {
-        var foundTrainee = traineeService.findByUsernameOrThrow(updateDto.getUserName());
-
-        boolean containsInvalidTrainings = updateDto.getTrainings()
-                .stream()
-                .anyMatch(trainingDto -> !trainingDto.getTrainee().getId().equals(foundTrainee.getId()));
-
-        if (containsInvalidTrainings) {
-            return ResponseEntity.badRequest().build();
-        }
-
         var newTrainings = updateDto.getTrainings()
                 .stream()
                 .map(trainingMapper::toTraining)
                 .collect(Collectors.toSet());
 
-        foundTrainee.getTrainings().addAll(newTrainings);
-
+        var updatedTrainee = traineeService.updateTraineeTrainings(updateDto.getUserName(), newTrainings);
         return ResponseEntity.ok(
-                traineeService.update(foundTrainee)
+                traineeService.update(updatedTrainee)
                         .getTrainings()
                         .stream()
                         .map(trainingMapper::toTrainingView)
                         .collect(Collectors.toSet())
         );
     }
-
 
     @Operation(
             summary = "Get trainee trainings list",

@@ -1,4 +1,4 @@
-package com.crm.mappers;
+package com.crm.converters.mappers;
 
 import com.crm.dtos.trainer.TrainerDto;
 import com.crm.dtos.trainer.TrainerView;

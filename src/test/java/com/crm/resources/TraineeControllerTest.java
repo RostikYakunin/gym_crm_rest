@@ -1,6 +1,8 @@
 package com.crm.resources;
 
 import com.crm.UnitTestBase;
+import com.crm.converters.mappers.TraineeMapper;
+import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainee.TraineeDto;
@@ -8,8 +10,6 @@ import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingView;
-import com.crm.mappers.TraineeMapper;
-import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
@@ -37,6 +37,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -68,6 +69,9 @@ class TraineeControllerTest extends UnitTestBase {
 
     @Captor
     private ArgumentCaptor<TraineeDto> traineeDtoArgumentCaptor;
+
+    @Captor
+    private ArgumentCaptor<Set<Training>> setArgumentCaptor;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -226,7 +230,7 @@ class TraineeControllerTest extends UnitTestBase {
         List<TrainingDto> trainingDtos = validTrainings ? List.of(trainingDto) : Collections.emptyList();
         var updateDto = new TraineeTrainingUpdateDto(username, trainingDtos);
 
-        lenient().when(traineeService.findByUsernameOrThrow(anyString())).thenReturn(foundTrainee);
+        lenient().when(traineeService.updateTraineeTrainings(anyString(), anySet())).thenReturn(foundTrainee);
         lenient().when(trainingMapper.toTraining(any(TrainingDto.class))).thenReturn(new Training());
         lenient().when(traineeService.update(any(Trainee.class))).thenReturn(foundTrainee);
 
@@ -237,7 +241,10 @@ class TraineeControllerTest extends UnitTestBase {
                             .content(objectMapper.writeValueAsString(updateDto)))
                     .andExpect(status().is(expectedStatus));
 
-            verify(traineeService, times(1)).findByUsernameOrThrow(stringArgumentCaptor.capture());
+            verify(traineeService, times(1)).updateTraineeTrainings(
+                    stringArgumentCaptor.capture(),
+                    setArgumentCaptor.capture()
+            );
             verify(traineeService, times(1)).update(traineeArgumentCaptor.capture());
         } else {
             mockMvc.perform(put("/api/v1/trainee/trainings")
@@ -245,7 +252,7 @@ class TraineeControllerTest extends UnitTestBase {
                             .content(objectMapper.writeValueAsString(updateDto)))
                     .andExpect(status().is(expectedStatus));
 
-            verify(traineeService, never()).findByUsernameOrThrow(stringArgumentCaptor.capture());
+            verify(traineeService, never()).updateTraineeTrainings(stringArgumentCaptor.capture(), setArgumentCaptor.capture());
             verify(traineeService, never()).update(traineeArgumentCaptor.capture());
         }
     }

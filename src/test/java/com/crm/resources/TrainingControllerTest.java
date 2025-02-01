@@ -1,9 +1,9 @@
 package com.crm.resources;
 
 import com.crm.UnitTestBase;
+import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingView;
-import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Training;
 import com.crm.services.TrainingService;
@@ -17,6 +17,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.core.convert.ConversionService;
 import org.springframework.http.MediaType;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,9 +27,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 
 import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -44,6 +48,9 @@ class TrainingControllerTest extends UnitTestBase {
 
     @Mock
     private TrainingMapper trainingMapper;
+
+    @Mock
+    private ConversionService conversionService;
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -93,13 +100,14 @@ class TrainingControllerTest extends UnitTestBase {
 
         if (trainee != null && trainer != null && trainingName != null && !trainingName.isEmpty() &&
                 type != null && date != null && duration != null && duration.toMinutes() >= 20 && duration.toHours() <= 2) {
-            when(trainingMapper.toTraining(trainingDto)).thenReturn(training);
             when(trainingService.save(training)).thenReturn(training);
-            when(trainingMapper.toTrainingView(training)).thenReturn(trainingView);
+            when(conversionService.convert(any(TrainingDto.class), eq(Training.class))).thenReturn(training);
+            when(conversionService.convert(any(Training.class), eq(TrainingView.class))).thenReturn(trainingView);
 
             mockMvc.perform(post("/api/v1/training")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(trainingDto)))
+                    .andDo(print())
                     .andExpect(status().isCreated())
                     .andExpect(jsonPath("$.id").value(trainingView.getId()));
         } else {

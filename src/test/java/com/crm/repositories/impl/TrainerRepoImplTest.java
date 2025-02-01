@@ -1,6 +1,7 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,13 +35,14 @@ public class TrainerRepoImplTest extends DbTestBase {
 
         // When
         var foundTrainer = trainerRepo.findById(savedTrainer.getId());
-        var unFoundTrainer = trainerRepo.findById(999L);
-
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> trainerRepo.findById(999L)
+        );
 
         // Then
         assertTrue(foundTrainer.isPresent());
         assertEquals("testName1.testLastName1", foundTrainer.get().getUserName());
-        assertFalse(unFoundTrainer.isPresent());
     }
 
     @Test
@@ -67,8 +69,10 @@ public class TrainerRepoImplTest extends DbTestBase {
         trainerRepo.delete(testTrainer);
 
         // Then
-        var deletedTrainer = trainerRepo.findById(testTrainer.getId());
-        assertFalse(deletedTrainer.isPresent());
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> trainerRepo.findById(testTrainer.getId())
+        );
     }
 
     @Test

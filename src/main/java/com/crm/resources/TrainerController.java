@@ -1,12 +1,12 @@
 package com.crm.resources;
 
+import com.crm.converters.mappers.TrainerMapper;
+import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainer.TrainerDto;
 import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingView;
-import com.crm.mappers.TrainerMapper;
-import com.crm.mappers.TrainingMapper;
 import com.crm.models.TrainingType;
 import com.crm.services.TrainerService;
 import io.swagger.v3.oas.annotations.Operation;
