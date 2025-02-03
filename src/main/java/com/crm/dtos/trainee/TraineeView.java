@@ -1,6 +1,6 @@
 package com.crm.dtos.trainee;
 
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

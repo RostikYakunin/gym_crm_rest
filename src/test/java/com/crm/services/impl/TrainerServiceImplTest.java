@@ -1,7 +1,9 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
-import com.crm.models.TrainingType;
+import com.crm.dtos.UserLoginDto;
+import com.crm.enums.TrainingType;
+import com.crm.exceptions.PasswordNotMatchException;
 import com.crm.repositories.TrainerRepo;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
@@ -90,14 +92,14 @@ class TrainerServiceImplTest extends UnitTestBase {
     @DisplayName("update should update trainer if exists")
     void update_ShouldUpdateTrainer_IfExists() {
         // Given
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
 
         // When
         var result = trainerService.update(testTrainer);
 
         // Then
         assertEquals(testTrainer, result);
-        verify(trainerRepo, times(1)).update(trainerArgumentCaptor.capture());
+        verify(trainerRepo, times(1)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -126,16 +128,23 @@ class TrainerServiceImplTest extends UnitTestBase {
         // Given
         var initialPassword = testTrainer.getPassword();
         testTrainer.setPassword(UserUtils.hashPassword(initialPassword));
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
 
-        // When
-        var result1 = trainerService.changePassword(testTrainer, initialPassword, "newPass");
-        var result2 = trainerService.changePassword(testTrainer, "wrong", "newPass");
+        // When - Then
+        assertThrows(
+                PasswordNotMatchException.class,
+                () -> trainerService.changePassword(
+                        new UserLoginDto(testTrainer.getUserName(), "testPassword", "newPass")
+                )
+        );
 
-        // Then
-        assertTrue(result1);
-        assertFalse(result2);
-        verify(trainerRepo, times(1)).update(trainerArgumentCaptor.capture());
+        assertDoesNotThrow(
+                () -> trainerService.changePassword(
+                        new UserLoginDto(testTrainer.getUserName(), testTrainer.getPassword(), "newPass")
+                )
+        );
+
+        verify(trainerRepo, times(1)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -143,7 +152,7 @@ class TrainerServiceImplTest extends UnitTestBase {
     void toggleActiveStatus_ShouldDeactivateWhenCurrentlyActive() {
         // Given
         when(trainerRepo.findById(anyLong())).thenReturn(Optional.of(testTrainer));
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
 
         // When
         var result1 = trainerService.activateStatus(1L);
@@ -154,7 +163,7 @@ class TrainerServiceImplTest extends UnitTestBase {
         assertFalse(result2);
 
         verify(trainerRepo, times(2)).findById(1L);
-        verify(trainerRepo, times(2)).update(trainerArgumentCaptor.capture());
+        verify(trainerRepo, times(2)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -222,11 +231,10 @@ class TrainerServiceImplTest extends UnitTestBase {
     void getUnassignedTrainersByTraineeUsername_ShouldReturnCorrectData(String traineeUsername, int expectedSize) {
         // Given
         List<Trainer> expectedTrainers = expectedSize > 0 ? List.of(mock(Trainer.class), mock(Trainer.class)) : Collections.emptyList();
-
         when(trainerRepo.getUnassignedTrainersByTraineeUsername(traineeUsername)).thenReturn(expectedTrainers);
 
         // When
-        var actualTrainers = trainerService.getUnassignedTrainersByTraineeUsername(traineeUsername);
+        var actualTrainers = trainerService.findNotAssignedTrainersByTraineeUserName(traineeUsername);
 
         // Then
         assertNotNull(actualTrainers);

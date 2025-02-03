@@ -1,28 +1,33 @@
 package com.crm.init;
 
-import com.crm.config.TestConfig;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@SpringBootTest
+@ActiveProfiles("test")
 class DataInitializerTest {
+    @Autowired
     private DataInitializer dataInitializer;
 
+    private String originalTrainingDataFilePath;
+
     @BeforeEach
-    void init() {
-        var context = new AnnotationConfigApplicationContext(TestConfig.class);
-        dataInitializer = context.getBean("dataInitializer", DataInitializer.class);
+    void setUp() {
+        originalTrainingDataFilePath = (String) ReflectionTestUtils.getField(dataInitializer, "trainingDataFilePath");
     }
 
     @AfterEach
-    void destroy() {
-        dataInitializer = null;
+    void tearDown() {
+        ReflectionTestUtils.setField(dataInitializer, "trainingDataFilePath", originalTrainingDataFilePath);
     }
 
     @Test

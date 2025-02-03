@@ -1,7 +1,9 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
-import com.crm.models.TrainingType;
+import com.crm.dtos.UserLoginDto;
+import com.crm.enums.TrainingType;
+import com.crm.exceptions.PasswordNotMatchException;
 import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Training;
@@ -104,7 +106,7 @@ class TraineeServiceImplTest extends UnitTestBase {
     @DisplayName("update should return updated trainee when trainee exists")
     void update_ShouldReturnUpdatedTrainee_WhenTraineeExists() {
         // Given
-        when(traineeRepo.update(any(Trainee.class))).thenReturn(testTrainee);
+        when(traineeRepo.save(any(Trainee.class))).thenReturn(testTrainee);
 
         // When
         var result = traineeService.update(testTrainee);
@@ -113,7 +115,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         assertNotNull(result);
         assertEquals(testTrainee, result);
 
-        verify(traineeRepo, times(1)).update(traineeArgumentCaptor.capture());
+        verify(traineeRepo, times(1)).save(traineeArgumentCaptor.capture());
     }
 
     @Test
@@ -156,17 +158,23 @@ class TraineeServiceImplTest extends UnitTestBase {
     void changePassword_ShouldChangePass_WhenPasswordsMatches() {
         // Given
         testTrainee.setPassword(UserUtils.hashPassword(testTrainee.getPassword()));
-        when(traineeRepo.update(any(Trainee.class))).thenReturn(testTrainee);
+        when(traineeRepo.save(any(Trainee.class))).thenReturn(testTrainee);
 
-        // When
-        var result1 = traineeService.changePassword(testTrainee, "testPassword", "newPass");
-        var result2 = traineeService.changePassword(testTrainee, testTrainee.getPassword(), "newPass");
+        // When - Then
+        assertThrows(
+                PasswordNotMatchException.class,
+                () -> traineeService.changePassword(
+                        new UserLoginDto(testTrainee.getUserName(), "testPassword", "newPass")
+                )
+        );
 
+        assertDoesNotThrow(
+                () -> traineeService.changePassword(
+                        new UserLoginDto(testTrainee.getUserName(), testTrainee.getPassword(), "newPass")
+                )
+        );
 
-        // Then
-        Assertions.assertTrue(result1);
-        Assertions.assertFalse(result2);
-        verify(traineeRepo, times(1)).update(traineeArgumentCaptor.capture());
+        verify(traineeRepo, times(1)).save(traineeArgumentCaptor.capture());
     }
 
     @Test
@@ -174,7 +182,7 @@ class TraineeServiceImplTest extends UnitTestBase {
     void toggleActiveStatus_ShouldDeactivateWhenCurrentlyActive() {
         // Given
         when(traineeRepo.findById(anyLong())).thenReturn(Optional.of(testTrainee));
-        when(traineeRepo.update(any(Trainee.class))).thenReturn(testTrainee);
+        when(traineeRepo.save(any(Trainee.class))).thenReturn(testTrainee);
 
         // When
         var result1 = traineeService.activateStatus(1L);
@@ -185,7 +193,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         Assertions.assertFalse(result2);
 
         verify(traineeRepo, times(2)).findById(1L);
-        verify(traineeRepo, times(2)).update(traineeArgumentCaptor.capture());
+        verify(traineeRepo, times(2)).save(traineeArgumentCaptor.capture());
     }
 
     @Test

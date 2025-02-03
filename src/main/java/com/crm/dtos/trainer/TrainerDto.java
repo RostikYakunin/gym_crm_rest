@@ -1,7 +1,7 @@
 package com.crm.dtos.trainer;
 
 import com.crm.dtos.UserDto;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;

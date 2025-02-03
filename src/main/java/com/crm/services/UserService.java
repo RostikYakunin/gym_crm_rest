@@ -1,6 +1,9 @@
 package com.crm.services;
 
-public interface UserService<T> {
+import com.crm.dtos.UserLoginDto;
+import com.crm.repositories.entities.User;
+
+public interface UserService<T extends User> {
     T findById(long id);
 
     T findByUsername(String username);
@@ -11,7 +14,7 @@ public interface UserService<T> {
 
     T update(T entity);
 
-    boolean changePassword(T entity, String inputtedPassword, String newPassword);
+    void changePassword(UserLoginDto loginDto);
 
     boolean activateStatus(long id);
 

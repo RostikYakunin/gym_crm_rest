@@ -1,5 +1,7 @@
-package com.crm.exception.handler;
+package com.crm.exceptions.handler;
 
+import com.crm.exceptions.PasswordNotMatchException;
+import com.crm.exceptions.UserNameChangedException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
@@ -24,6 +26,14 @@ import java.util.stream.Collectors;
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<String> handleException(Exception ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.error("[{}] Unexpected error: {}", transactionId, ex.getMessage(), ex);
+        return ResponseEntity.internalServerError()
+                .body("An unexpected error occurred. Please contact support.\n" + ex.getCause());
+    }
 
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex) {
@@ -38,11 +48,12 @@ public class GlobalExceptionHandler {
     public ResponseEntity<String> handleBadRequestException(BadRequestException ex) {
         var transactionId = MDC.get("transactionId");
         log.warn("[{}] Bad request: {}", transactionId, ex.getMessage());
-        return ResponseEntity.badRequest().body(ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body(ex.getMessage());
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
+    public ResponseEntity<Map<String, String>> handleMethodArgumentNotValidException(MethodArgumentNotValidException ex) {
         var transactionId = MDC.get("transactionId");
         var errors = new HashMap<String, String>();
         ex.getBindingResult()
@@ -52,7 +63,7 @@ public class GlobalExceptionHandler {
                 );
 
         log.warn("[{}] Validation error: {}", transactionId, errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body(errors);
     }
 
@@ -67,7 +78,7 @@ public class GlobalExceptionHandler {
                 ));
 
         log.warn("[{}] Constraint violation: {}", transactionId, errors);
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body(errors);
     }
 
@@ -76,7 +87,7 @@ public class GlobalExceptionHandler {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] Malformed request body: {}", transactionId, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body("Invalid request body: " + ex.getMessage());
     }
 
@@ -89,48 +100,66 @@ public class GlobalExceptionHandler {
                 .body("Access denied: " + ex.getMessage());
     }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception ex) {
-        var transactionId = MDC.get("transactionId");
-
-        log.error("[{}] Unexpected error: {}", transactionId, ex.getMessage(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An unexpected error occurred. Please contact support.\n" + ex.getCause());
-    }
-
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<String> handleIllegalStateException(IllegalStateException ex) {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] Registration conflict: {}", transactionId, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<String> handleIllegalStateException(HttpRequestMethodNotSupportedException ex) {
+    public ResponseEntity<String> handleHttpRequestMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] This request with these parameters is not supported: {}", transactionId, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<String> handleIllegalStateException(MissingServletRequestParameterException ex) {
+    public ResponseEntity<String> handleMissingServletRequestParameterException(MissingServletRequestParameterException ex) {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] Parameters are not correct for this request: {}", transactionId, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body(ex.getMessage());
     }
 
     @ExceptionHandler(PSQLException.class)
-    public ResponseEntity<String> handleIllegalStateException(PSQLException ex) {
+    public ResponseEntity<String> handlePSQLException(PSQLException ex) {
         var transactionId = MDC.get("transactionId");
 
         log.warn("[{}] Something went wrong with SQL request: {}", transactionId, ex.getMessage());
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        return ResponseEntity.badRequest()
                 .body("Your request is wrong, please pay attention on your request details");
+    }
+
+    @ExceptionHandler(PasswordNotMatchException.class)
+    public ResponseEntity<String> handlePasswordNotMatchException(PasswordNotMatchException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] Password was not changed: inputted password is wrong: {}", transactionId, ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body("Password was not changed:" + ex.getMessage());
+    }
+
+    @ExceptionHandler(UserNameChangedException.class)
+    public ResponseEntity<String> handleUserNameChangedException(UserNameChangedException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] User name can not be changed: {}", transactionId, ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body("User name was changed:" + ex.getMessage());
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
+        var transactionId = MDC.get("transactionId");
+
+        log.warn("[{}] Arguments are wrong: {}", transactionId, ex.getMessage());
+        return ResponseEntity.badRequest()
+                .body("Arguments are wrong:" + ex.getMessage());
     }
 }

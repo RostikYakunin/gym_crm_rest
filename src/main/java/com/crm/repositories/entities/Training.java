@@ -1,6 +1,6 @@
 package com.crm.repositories.entities;
 
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

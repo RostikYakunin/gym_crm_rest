@@ -1,0 +1,18 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://prod-db-server:5432/prod_db
+    username: prod_user
+    password: prod_pass
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+        show_sql: false
+
+logging:
+  level:
+    root: WARN
+    org.springframework.web: ERROR

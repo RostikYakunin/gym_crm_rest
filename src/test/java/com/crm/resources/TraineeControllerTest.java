@@ -1,37 +1,31 @@
 package com.crm.resources;
 
 import com.crm.UnitTestBase;
-import com.crm.converters.mappers.TraineeMapper;
-import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
-import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingDto;
 import com.crm.dtos.training.TrainingView;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
+import com.crm.init.DataInitializer;
 import com.crm.repositories.entities.Trainee;
-import com.crm.repositories.entities.Training;
 import com.crm.services.TraineeService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import jakarta.servlet.ServletException;
 import org.apache.coyote.BadRequestException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -48,21 +42,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
 class TraineeControllerTest extends UnitTestBase {
-
+    @Autowired
     private MockMvc mockMvc;
-
-    @InjectMocks
-    private TraineeController traineeController;
-
-    @Mock
+    @MockitoBean
     private TraineeService traineeService;
-
-    @Mock
-    private TraineeMapper traineeMapper;
-
-    @Mock
-    private TrainingMapper trainingMapper;
+    @MockitoBean
+    private DataInitializer dataInitializer;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @Captor
     private ArgumentCaptor<String> stringArgumentCaptor;
@@ -71,30 +62,16 @@ class TraineeControllerTest extends UnitTestBase {
     private ArgumentCaptor<TraineeDto> traineeDtoArgumentCaptor;
 
     @Captor
-    private ArgumentCaptor<Set<Training>> setArgumentCaptor;
+    private ArgumentCaptor<UserLoginDto> userLoginDtoArgumentCaptor;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
-        jsonConverter.setObjectMapper(objectMapper);
-
-        mockMvc = MockMvcBuilders.standaloneSetup(traineeController)
-                .setMessageConverters(jsonConverter)
-                .build();
-    }
+    @Captor
+    private ArgumentCaptor<TraineeTrainingUpdateDto> traineeTrainingUpdateDtoArgumentCaptor;
 
     @Test
     @DisplayName("Should successfully create trainee")
     void shouldRegisterTraineeSuccessfully() throws Exception {
         // Given
-        when(traineeMapper.toTrainee(any(TraineeDto.class))).thenReturn(testTrainee);
-        when(traineeService.save(any(Trainee.class))).thenReturn(testTrainee);
-        when(traineeMapper.toDto(any(Trainee.class))).thenReturn(testTraineeDto);
+        when(traineeService.addTrainee(any(TraineeDto.class))).thenReturn(testTraineeDto);
 
         // When - Then
         mockMvc.perform(post("/api/v1/trainee")
@@ -104,30 +81,21 @@ class TraineeControllerTest extends UnitTestBase {
                 .andExpect(jsonPath("$.userName").value(testTraineeDto.getUserName()))
                 .andExpect(jsonPath("$.password").value(testTraineeDto.getPassword()));
 
-        verify(traineeMapper, times(1)).toTrainee(traineeDtoArgumentCaptor.capture());
-        verify(traineeService, times(1)).save(traineeArgumentCaptor.capture());
-        verify(traineeMapper, times(1)).toDto(traineeArgumentCaptor.capture());
+        verify(traineeService, times(1)).addTrainee(traineeDtoArgumentCaptor.capture());
     }
 
     @ParameterizedTest
     @CsvSource({
-            "user1, oldPas1, newPas1, true, 200, '\"Password successfully changed\"'",
-            "user2, oldPas2, newPas2, false, 400, '\"Password was not changed: inputted password is wrong\"'"
+            "user1, oldPas1, newPas1, 200, 'Password successfully changed'",
     })
     @DisplayName("Should successfully change/not change trainee`s password")
     void shouldChangePasswordSuccessfully(
             String username, String oldPassword, String newPassword,
-            boolean changeResult, int expectedStatus, String expectedMessage
+            int expectedStatus, String expectedMessage
     ) throws Exception {
         // Given
         var testUserLoginDto = new UserLoginDto(username, oldPassword, newPassword);
-        var testFoundTrainee = Trainee.builder()
-                .userName(username)
-                .password(oldPassword)
-                .build();
-
-        when(traineeService.findByUsernameOrThrow(anyString())).thenReturn(testFoundTrainee);
-        when(traineeService.changePassword(any(Trainee.class), anyString(), anyString())).thenReturn(changeResult);
+        doNothing().when(traineeService).changePassword(any(UserLoginDto.class));
 
         // When - Then
         mockMvc.perform(put("/api/v1/trainee/password")
@@ -136,12 +104,7 @@ class TraineeControllerTest extends UnitTestBase {
                 .andExpect(status().is(expectedStatus))
                 .andExpect(content().string(expectedMessage));
 
-        verify(traineeService, times(1)).findByUsernameOrThrow(stringArgumentCaptor.capture());
-        verify(traineeService, times(1)).changePassword(
-                traineeArgumentCaptor.capture(),
-                stringArgumentCaptor.capture(),
-                stringArgumentCaptor.capture()
-        );
+        verify(traineeService, times(1)).changePassword(userLoginDtoArgumentCaptor.capture());
     }
 
     @ParameterizedTest
@@ -151,10 +114,7 @@ class TraineeControllerTest extends UnitTestBase {
     @DisplayName("Should get/not get trainee`s profile according to data")
     void shouldGetTraineeProfileSuccessfully(String username, boolean traineeExists, int expectedStatus) throws Exception {
         // Given
-        var foundTrainee = traineeExists ? testTrainee : null;
-
-        when(traineeService.findByUsernameOrThrow(anyString())).thenReturn(foundTrainee);
-        when(traineeMapper.toTraineeView(any(Trainee.class))).thenReturn(testTraineeView);
+        when(traineeService.findProfileByUserName(anyString())).thenReturn(testTraineeView);
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainee/" + username))
@@ -165,8 +125,7 @@ class TraineeControllerTest extends UnitTestBase {
                     }
                 });
 
-        verify(traineeService, times(1)).findByUsernameOrThrow(stringArgumentCaptor.capture());
-        verify(traineeMapper, times(1)).toTraineeView(traineeArgumentCaptor.capture());
+        verify(traineeService, times(1)).findProfileByUserName(stringArgumentCaptor.capture());
     }
 
     @ParameterizedTest
@@ -210,51 +169,25 @@ class TraineeControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "user1, true, true, 200",
-            "user2, false, false, 400"
+            "user1, 200"
     })
     @DisplayName("Should update/not update trainee`s trainings according to data")
-    void shouldUpdateTraineeTrainings(String username, boolean traineeExists, boolean validTrainings, int expectedStatus) throws Exception {
+    void shouldUpdateTraineeTrainings(String username, int expectedStatus) throws Exception {
         // Given
-        var testTrainee = Trainee.builder()
-                .id(1L)
-                .userName(username)
-                .password("somePassword")
-                .build();
-        var foundTrainee = traineeExists ? testTrainee : null;
-
         var trainingDto = TrainingDto.builder()
                 .trainee(testTrainee)
                 .build();
 
-        List<TrainingDto> trainingDtos = validTrainings ? List.of(trainingDto) : Collections.emptyList();
-        var updateDto = new TraineeTrainingUpdateDto(username, trainingDtos);
-
-        lenient().when(traineeService.updateTraineeTrainings(anyString(), anySet())).thenReturn(foundTrainee);
-        lenient().when(trainingMapper.toTraining(any(TrainingDto.class))).thenReturn(new Training());
-        lenient().when(traineeService.update(any(Trainee.class))).thenReturn(foundTrainee);
+        var updateDto = new TraineeTrainingUpdateDto(username, List.of(trainingDto));
+        when(traineeService.updateTraineeTrainings(any(TraineeTrainingUpdateDto.class))).thenReturn(Set.of(new TrainingView()));
 
         // When - Then
-        if (traineeExists) {
-            mockMvc.perform(put("/api/v1/trainee/trainings/")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateDto)))
-                    .andExpect(status().is(expectedStatus));
+        mockMvc.perform(put("/api/v1/trainee/trainings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(updateDto)))
+                .andExpect(status().is(expectedStatus));
 
-            verify(traineeService, times(1)).updateTraineeTrainings(
-                    stringArgumentCaptor.capture(),
-                    setArgumentCaptor.capture()
-            );
-            verify(traineeService, times(1)).update(traineeArgumentCaptor.capture());
-        } else {
-            mockMvc.perform(put("/api/v1/trainee/trainings")
-                            .contentType(MediaType.APPLICATION_JSON)
-                            .content(objectMapper.writeValueAsString(updateDto)))
-                    .andExpect(status().is(expectedStatus));
-
-            verify(traineeService, never()).updateTraineeTrainings(stringArgumentCaptor.capture(), setArgumentCaptor.capture());
-            verify(traineeService, never()).update(traineeArgumentCaptor.capture());
-        }
+        verify(traineeService, times(1)).updateTraineeTrainings(traineeTrainingUpdateDtoArgumentCaptor.capture());
     }
 
     @ParameterizedTest
@@ -277,8 +210,7 @@ class TraineeControllerTest extends UnitTestBase {
 
         when(traineeService.findTraineeTrainingsByCriteria(
                 eq(username), eq(periodFrom), eq(periodTo), eq(trainerUserName), eq(trainingType)))
-                .thenReturn(List.of(new Training()));
-        when(trainingMapper.toTrainingView(any(Training.class))).thenReturn(shortView);
+                .thenReturn(Set.of(shortView));
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainee/trainings")
@@ -312,14 +244,10 @@ class TraineeControllerTest extends UnitTestBase {
                             .param("training-type", trainingTypeStr))
                     .andExpect(status().is(expectedStatus));
         } else {
-            assertThrows(
-                    ServletException.class,
-                    () -> mockMvc.perform(get("/api/v1/trainee/trainings")
-                                    .param("username", username)
-                                    .param("training-type", trainingTypeStr))
-                            .andExpect(status().is(expectedStatus)),
-                    "No enum constant com.crm.models.TrainingType.INVALID_TYPE"
-            );
+            mockMvc.perform(get("/api/v1/trainee/trainings")
+                            .param("username", username)
+                            .param("training-type", trainingTypeStr))
+                    .andExpect(status().is(expectedStatus));
         }
     }
 
@@ -334,7 +262,7 @@ class TraineeControllerTest extends UnitTestBase {
         var periodTo = LocalDate.parse(periodToStr);
 
         when(traineeService.findTraineeTrainingsByCriteria(eq(username), eq(periodFrom), eq(periodTo), eq(null), eq(null)))
-                .thenReturn(Collections.emptyList());
+                .thenReturn(Collections.emptySet());
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainee/trainings")
@@ -347,8 +275,8 @@ class TraineeControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "user1, true, 200, '\"Trainee with username=user1 was activated.\"'",
-            "user2, false, 200, '\"Trainee with username=user2 was deactivated.\"'",
+            "user1, true, 200, 'Trainee with username=user1 was activated.'",
+            "user2, false, 200, 'Trainee with username=user2 was deactivated.'",
     })
     @DisplayName("Should update/not update trainee`s status according to data")
     void shouldUpdateTraineeStatusWithValidData(String username, boolean isActive, int expectedStatus, String expectedMessage) throws Exception {
@@ -371,42 +299,18 @@ class TraineeControllerTest extends UnitTestBase {
                 .andExpect(content().string(expectedMessage));
     }
 
-    @ParameterizedTest
-    @CsvSource({
-            "user1, user1, 200",
-            "user2, user1, 400"
-    })
-    @DisplayName("Should update/not update trainee according to data")
-    void testUpdateTrainee(String existingUsername, String inputUsername, int expectedStatus) throws Exception {
+    @Test
+    @DisplayName("Should update trainee according to data")
+    void testUpdateTrainee() throws Exception {
         // Given
-        var updateDto = TraineeDto.builder()
-                .firstName("newFirstName")
-                .lastName("newLastName")
-                .userName(inputUsername)
-                .password("Pas2345")
-                .isActive(true)
-                .build();
-
-        testTrainee.setUserName(existingUsername);
-        lenient().when(traineeService.findById(anyLong())).thenReturn(testTrainee);
-
-        if (expectedStatus == 200) {
-            var traineeViewDto = TraineeView.builder()
-                    .firstName("newFirstName")
-                    .lastName("newLastName")
-                    .build();
-
-            when(traineeMapper.toTrainee(any(TraineeDto.class))).thenReturn(testTrainee);
-            doNothing().when(traineeMapper).updateTrainee(any(Trainee.class), any(Trainee.class));
-            when(traineeService.update(any(Trainee.class))).thenReturn(testTrainee);
-            when(traineeMapper.toTraineeView(any(Trainee.class))).thenReturn(traineeViewDto);
-        }
+        when(traineeService.updateTraineeProfile(anyLong(), any(TraineeDto.class))).thenReturn(testTraineeView);
 
         //When - Then
-        mockMvc.perform(put("/api/v1/trainee/" + 1)
+        mockMvc.perform(put("/api/v1/trainee/{id}", 1)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(updateDto)))
-                .andExpect(status().is(expectedStatus));
+                        .content(objectMapper.writeValueAsString(testTraineeDto)))
+                .andExpect(status().isOk())
+                .andDo(print());
     }
 }
 

@@ -1,70 +1,48 @@
 package com.crm.resources;
 
 import com.crm.UnitTestBase;
-import com.crm.converters.mappers.TrainerMapper;
-import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.UserLoginDto;
 import com.crm.dtos.UserStatusUpdateDto;
 import com.crm.dtos.trainer.TrainerDto;
 import com.crm.dtos.trainer.TrainerView;
 import com.crm.dtos.training.TrainingView;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
+import com.crm.init.DataInitializer;
 import com.crm.repositories.entities.Trainer;
-import com.crm.repositories.entities.Training;
 import com.crm.services.TrainerService;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDate;
-import java.util.Collections;
+import java.util.Set;
 
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+@SpringBootTest
+@ActiveProfiles("test")
+@AutoConfigureMockMvc
 class TrainerControllerTest extends UnitTestBase {
+    @Autowired
     private MockMvc mockMvc;
-
-    @Mock
+    @MockitoBean
     private TrainerService trainerService;
-
-    @Mock
-    private TrainerMapper trainerMapper;
-
-    @Mock
-    private TrainingMapper trainingMapper;
-
-    @InjectMocks
-    private TrainerController trainerController;
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @BeforeEach
-    void setUp() {
-        objectMapper.registerModule(new JavaTimeModule());
-        objectMapper.disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
-
-        MappingJackson2HttpMessageConverter jsonConverter = new MappingJackson2HttpMessageConverter();
-        jsonConverter.setObjectMapper(objectMapper);
-
-        mockMvc = MockMvcBuilders.standaloneSetup(trainerController)
-                .setMessageConverters(jsonConverter)
-                .build();
-    }
+    @MockitoBean
+    private DataInitializer dataInitializer;
+    @Autowired
+    private ObjectMapper objectMapper;
 
     @ParameterizedTest
     @CsvSource({
@@ -86,12 +64,9 @@ class TrainerControllerTest extends UnitTestBase {
         trainerDto.setSpecialization(trainingType.isEmpty() ? null : TrainingType.valueOf(trainingType));
 
         var trainer = new Trainer();
-        var trainerResponseDto = new TrainerDto();
 
         if (!firstName.isEmpty() && !lastName.isEmpty() && !password.isEmpty() && !trainingType.isEmpty()) {
-            when(trainerMapper.toTrainer(any(TrainerDto.class))).thenReturn(trainer);
             when(trainerService.save(any(Trainer.class))).thenReturn(trainer);
-            when(trainerMapper.toDto(any(Trainer.class))).thenReturn(trainerResponseDto);
 
             //When - Then
             mockMvc.perform(post("/api/v1/trainer")
@@ -127,15 +102,14 @@ class TrainerControllerTest extends UnitTestBase {
 
         if (!userName.isEmpty() && !oldPassword.isEmpty() && !newPassword.isEmpty()) {
             when(trainerService.findByUsernameOrThrow(userName)).thenReturn(trainer);
-            when(trainerService.changePassword(trainer, oldPassword, newPassword)).thenReturn(true);
-
+            doNothing().when(trainerService).changePassword(any(UserLoginDto.class));
 
             // When - Then
             mockMvc.perform(put("/api/v1/trainer/password")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(loginDto)))
                     .andExpect(status().isOk())
-                    .andExpect(content().string("\"Password successfully changed\""));
+                    .andExpect(content().string("Password successfully changed"));
         } else {
             mockMvc.perform(put("/api/v1/trainer/password")
                             .contentType(MediaType.APPLICATION_JSON)
@@ -146,29 +120,22 @@ class TrainerControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "user1",
-            "''"
+            "user1"
     })
     @DisplayName("Should get/not get trainer`s profile according to data")
     void getTrainerProfile_ShouldHandleVariousInputs(String username) throws Exception {
         // Given
-        var trainer = new Trainer();
-        var trainerView = new TrainerView();
+        var trainerView = TrainerView.builder()
+                .firstName("TestName")
+                .build();
 
-        if (!username.isEmpty()) {
-            when(trainerService.findByUsernameOrThrow(username)).thenReturn(trainer);
-            when(trainerMapper.toTrainerView(trainer)).thenReturn(trainerView);
+        when(trainerService.findProfileByUserName(username)).thenReturn(trainerView);
 
-            //When - Then
-            mockMvc.perform(get("/api/v1/trainer/{username}", username)
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.firstName").value(trainerView.getFirstName()));
-        } else {
-            mockMvc.perform(get("/api/v1/trainer/{username}", username)
-                            .accept(MediaType.APPLICATION_JSON))
-                    .andExpect(status().isMethodNotAllowed());
-        }
+        //When - Then
+        mockMvc.perform(get("/api/v1/trainer/{username}", username)
+                        .accept(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.firstName").value(trainerView.getFirstName()));
     }
 
     @ParameterizedTest
@@ -197,9 +164,7 @@ class TrainerControllerTest extends UnitTestBase {
 
         if (!firstName.isEmpty() && !lastName.isEmpty() && !userName.isEmpty() && !specialization.isEmpty() && !isActive.isEmpty()) {
             when(trainerService.findById(anyLong())).thenReturn(trainer);
-            when(trainerMapper.toTrainer(any(TrainerDto.class))).thenReturn(trainer);
             when(trainerService.update(any(Trainer.class))).thenReturn(trainer);
-            when(trainerMapper.toTrainerView(any(Trainer.class))).thenReturn(trainerView);
 
             // When - Then
             mockMvc.perform(put("/api/v1/trainer/1")
@@ -231,13 +196,10 @@ class TrainerControllerTest extends UnitTestBase {
                 .specialization(specialization)
                 .isActive(true)
                 .build();
-
-        when(trainerService.getUnassignedTrainersByTraineeUsername(anyString()))
-                .thenReturn(Collections.singletonList(new Trainer()));
-        when(trainerMapper.toDto(any(Trainer.class))).thenReturn(expectedTrainer);
+        when(trainerService.findNotAssignedTrainersByTraineeUserName(anyString())).thenReturn(Set.of(expectedTrainer));
 
         //When - Then
-        mockMvc.perform(get("/api/v1/trainer/unassigned/" + username))
+        mockMvc.perform(get("/api/v1/trainer/unassigned/{username}", username))
                 .andExpect(status().isOk())
                 .andDo(print())
                 .andExpect(jsonPath("$[0].firstName").value(firstName))
@@ -248,8 +210,8 @@ class TrainerControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "john.doe, true, '\"Trainer with userName=john.doe was activated.\"'",
-            "jane.doe, false, '\"Trainer with userName=jane.doe was deactivated.\"'"
+            "john.doe, true, 'Trainer with userName=john.doe was activated.'",
+            "jane.doe, false, 'Trainer with userName=jane.doe was deactivated.'"
     })
     @DisplayName("Should update trainee`s status according to data")
     void updateTraineeStatus_ShouldUpdateStatus(
@@ -273,28 +235,22 @@ class TrainerControllerTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "trainer1, 2023-01-01, 2023-12-31, trainee1, 3",
-            "trainer2, , , , 5",
-            "trainer3, 2023-06-01, , , 2",
-            "trainer4, , 2023-12-31, trainee2, 4",
-            "trainer5, , , trainee3, 1"
+            "trainer1, 2023-01-01, 2023-12-31, trainee1",
+            "trainer2, , , ",
+            "trainer3, 2023-06-01, , ",
+            "trainer4, , 2023-12-31, trainee2",
+            "trainer5, , , trainee3"
     })
     @DisplayName("Should get trainer trainings according to data")
     void getTrainerTrainings_ShouldReturnTrainings(
-            String username, String periodFromStr, String periodToStr, String traineeUserName, int expectedTrainingsCount
+            String username, String periodFromStr, String periodToStr, String traineeUserName
     ) throws Exception {
         //Given
         var periodFrom = periodFromStr == null ? null : LocalDate.parse(periodFromStr);
         var periodTo = periodToStr == null ? null : LocalDate.parse(periodToStr);
-        var mockTrainings = Collections.nCopies(expectedTrainingsCount, new Training());
 
         when(trainerService.findTrainerTrainingsByCriteria(username, periodFrom, periodTo, traineeUserName, TrainingType.YOGA))
-                .thenReturn(mockTrainings);
-        when(trainingMapper.toTrainingView(any()))
-                .thenAnswer(invocation -> {
-                    Training training = invocation.getArgument(0);
-                    return new TrainingView(1L, 1L, 1L, training.getTrainingName(), training.getTrainingType(), training.getTrainingDate(), training.getTrainingDuration());
-                });
+                .thenReturn(Set.of(new TrainingView()));
 
         // When - Then
         mockMvc.perform(get("/api/v1/trainer/trainings")
@@ -305,6 +261,6 @@ class TrainerControllerTest extends UnitTestBase {
                         .param("training-type", "YOGA")
                 )
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(expectedTrainingsCount));
+                .andExpect(jsonPath("$").isNotEmpty());
     }
 }

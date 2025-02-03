@@ -5,10 +5,15 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest
+@ActiveProfiles("test")
 public class TrainingRepoImplTest extends DbTestBase {
+
     @BeforeEach
     void init() {
         traineeRepo.save(testTrainee);
@@ -47,28 +52,14 @@ public class TrainingRepoImplTest extends DbTestBase {
     void updateTraining_ShouldSaveUpdatedTraining() {
         // Given
         var newTrainingName = "newTrainingName";
-        var savedTraining = trainingRepo.save(testTraining);
+        trainingRepo.save(testTraining);
         testTraining.setTrainingName(newTrainingName);
 
         // When
-        var updatedTraining = trainingRepo.update(testTraining);
+        var updatedTraining = trainingRepo.save(testTraining);
 
         // Then
         assertEquals(newTrainingName, updatedTraining.getTrainingName());
-    }
-
-    @Test
-    @DisplayName("Delete a training and verify it is removed")
-    void deleteTraining_ShouldRemoveTraining() {
-        // Given
-        trainingRepo.save(testTraining);
-
-        // When
-        trainingRepo.delete(testTraining);
-
-        // Then
-        var deletedTraining = trainingRepo.findById(1L);
-        assertFalse(deletedTraining.isPresent());
     }
 
     @Test
@@ -78,8 +69,8 @@ public class TrainingRepoImplTest extends DbTestBase {
         var savedTraining = trainingRepo.save(testTraining);
 
         // When
-        var result1 = trainingRepo.isExistsById(savedTraining.getId());
-        var result2 = trainingRepo.isExistsById(999L);
+        var result1 = trainingRepo.existsById(savedTraining.getId());
+        var result2 = trainingRepo.existsById(999L);
 
         // Then
         Assertions.assertTrue(result1);

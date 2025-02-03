@@ -1,20 +1,13 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TraineeRepoImplTest extends DbTestBase {
-
-    @BeforeEach
-    void init() {
-        traineeRepo.save(testTrainee);
-    }
 
     @Test
     @DisplayName("Save a trainee and verify it is persisted")
@@ -38,13 +31,10 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // When
         var notEmptyResult = traineeRepo.findById(savedId.getId());
-
-        assertThrows(
-                EntityNotFoundException.class,
-                () -> traineeRepo.findById(100000L)
-        );
+        var emptyRes = traineeRepo.findById(100000L);
 
         // Then
+        assertTrue(emptyRes.isEmpty());
         assertTrue(notEmptyResult.isPresent());
         assertEquals(testTrainee.getUserName(), notEmptyResult.get().getUserName());
     }
@@ -57,7 +47,7 @@ public class TraineeRepoImplTest extends DbTestBase {
         testTrainee.setUserName("NewTraineeName");
 
         // When
-        var updatedTrainee = traineeRepo.update(testTrainee);
+        var updatedTrainee = traineeRepo.save(testTrainee);
 
         // Then
         assertEquals("NewTraineeName", updatedTrainee.getUserName());
@@ -73,10 +63,8 @@ public class TraineeRepoImplTest extends DbTestBase {
         traineeRepo.delete(saved);
 
         // Then
-        assertThrows(
-                EntityNotFoundException.class,
-                () -> traineeRepo.findByUserName(saved.getUserName())
-        );
+        var byUserName = traineeRepo.findByUserName(saved.getUserName());
+        assertTrue(byUserName.isEmpty());
     }
 
     @Test
@@ -86,8 +74,8 @@ public class TraineeRepoImplTest extends DbTestBase {
         var savedTrainee = traineeRepo.save(testTrainee);
 
         // When
-        var trueResult = traineeRepo.isExistsById(savedTrainee.getId());
-        var wrongResult = traineeRepo.isExistsById(1000L);
+        var trueResult = traineeRepo.existsById(savedTrainee.getId());
+        var wrongResult = traineeRepo.existsById(1000L);
 
         // Then
         Assertions.assertTrue(trueResult);
@@ -98,6 +86,7 @@ public class TraineeRepoImplTest extends DbTestBase {
     @DisplayName("Get trainee trainings by criteria and verify result")
     void getTraineeTrainingsByCriteria_ShouldReturnCorrectTrainings() {
         // Given
+        traineeRepo.save(testTrainee);
         trainerRepo.save(testTrainer);
         trainingRepo.save(testTraining);
 
@@ -116,8 +105,10 @@ public class TraineeRepoImplTest extends DbTestBase {
     @DisplayName("isUserNameExists - should return result when entity was found")
     void isUserNameExists_ShouldReturnTrue_WhenEntityWasFound() {
         // Given - When
-        var positiveResult = traineeRepo.isUserNameExists("testName.testLastName");
-        var negativeResult = traineeRepo.isUserNameExists("unknown");
+        var saved = traineeRepo.save(testTrainee);
+
+        var positiveResult = traineeRepo.existsByUserName(saved.getUserName());
+        var negativeResult = traineeRepo.existsByUserName("unknown");
 
         // Then
         Assertions.assertTrue(positiveResult);
@@ -128,7 +119,8 @@ public class TraineeRepoImplTest extends DbTestBase {
     @DisplayName("findByUserName - should return entity when it was found")
     void findByUserName_ShouldReturnEntity_WhenEntityWasFound() {
         // Given - When
-        var result = traineeRepo.findByUserName("testName.testLastName");
+        var trainee = traineeRepo.save(testTrainee);
+        var result = traineeRepo.findByUserName(trainee.getUserName());
 
         // Then
         assertNotNull(result.get());

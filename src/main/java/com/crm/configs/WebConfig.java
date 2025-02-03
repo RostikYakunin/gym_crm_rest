@@ -1,18 +1,18 @@
-package com.crm.config;
+package com.crm.configs;
 
-import com.crm.commons.TransactionInterceptor;
-import org.springframework.context.annotation.ComponentScan;
+import com.crm.commons.LoggingInterceptor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
-@EnableWebMvc
-@ComponentScan(basePackages = {"com.crm"})
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
+    private final LoggingInterceptor loggingInterceptor;
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        registry.addInterceptor(new TransactionInterceptor());
+        registry.addInterceptor(loggingInterceptor);
     }
 }

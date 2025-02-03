@@ -1,6 +1,5 @@
 package com.crm.init;
 
-import com.crm.config.AppConfig;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
@@ -13,8 +12,6 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Import;
-import org.springframework.context.annotation.PropertySource;
 import org.springframework.stereotype.Component;
 
 import java.io.File;
@@ -22,8 +19,6 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
-@PropertySource("classpath:application.properties")
-@Import(AppConfig.class)
 @Slf4j
 public class DataInitializer {
     @Value("${data.file.trainee_data}")

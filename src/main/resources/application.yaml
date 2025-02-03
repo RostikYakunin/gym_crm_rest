@@ -1,0 +1,58 @@
+server:
+  port: ${APP_PORT}
+
+spring:
+  application:
+    name: ${APP_NAME}
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: ${POSTGRES_DRIVER}
+    hikari:
+      initializationFailTimeout: 60000
+      connectionTimeout: 30000
+      maximumPoolSize: 10
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+        show_sql: false
+  docker:
+    compose:
+      enabled: true
+      file: ./docker-compose.yaml
+      stop:
+        timeout: 10s
+
+  jackson:
+    serialization:
+      indent_output: true
+
+logging:
+  level:
+    root: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+management:
+  endpoint:
+    health:
+      show-details: always
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+data:
+  file:
+    trainee_data: src/main/resources/init/trainee-data.json
+    trainer_data: src/main/resources/init/trainer-data.json
+    training_data: src/main/resources/init/training-data.json

@@ -1,41 +1,19 @@
 package com.crm.repositories.impl;
 
-import com.crm.models.TrainingType;
-import com.crm.repositories.TraineeRepo;
-import com.crm.repositories.entities.Trainee;
+import com.crm.enums.TrainingType;
+import com.crm.repositories.CustomTraineeRepo;
 import com.crm.repositories.entities.Training;
-import lombok.extern.slf4j.Slf4j;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Repository
-@Slf4j
-public class TraineeRepoImpl extends AbstractUserRepo<Trainee> implements TraineeRepo {
-    @Override
-    protected Class<Trainee> getEntityClass() {
-        return Trainee.class;
-    }
-
-    @Override
-    protected String getEntityClassName() {
-        return Trainee.class.getSimpleName();
-    }
-
-    @Override
-    public void delete(Trainee trainee) {
-        log.debug("Start deleting entity...");
-        if (!trainee.getTrainings().isEmpty()) {
-            entityManager.createQuery("DELETE FROM Training t WHERE t.trainee.id = :traineeId")
-                    .setParameter("traineeId", trainee.getId())
-                    .executeUpdate();
-        }
-
-        entityManager.createQuery("DELETE FROM Trainee t WHERE t.id = :traineeId")
-                .setParameter("traineeId", trainee.getId())
-                .executeUpdate();
-    }
+public class CustomTraineeRepoImpl implements CustomTraineeRepo {
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
