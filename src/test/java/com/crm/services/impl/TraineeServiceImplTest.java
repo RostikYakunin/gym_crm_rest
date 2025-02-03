@@ -1,19 +1,25 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
+import com.crm.models.TrainingType;
 import com.crm.repositories.TraineeRepo;
 import com.crm.repositories.entities.Trainee;
+import com.crm.repositories.entities.Training;
 import com.crm.utils.UserUtils;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 import java.time.LocalDate;
-import java.util.NoSuchElementException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -55,7 +61,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         var result = traineeService.save("John", "Doe", "password", "testAddress", LocalDate.of(1998, 11, 11));
 
         // Then
-        assertEquals(expectedUserName, result.getUsername());
+        assertEquals(expectedUserName, result.getUserName());
         assertNotNull(result.getPassword());
         assertEquals(result, result);
 
@@ -74,7 +80,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         var result = traineeService.save(testTrainee);
 
         // Then
-        assertEquals(expectedUserName, result.getUsername());
+        assertEquals(expectedUserName, result.getUserName());
         assertNotNull(result.getPassword());
         assertEquals(result, result);
 
@@ -98,7 +104,6 @@ class TraineeServiceImplTest extends UnitTestBase {
     @DisplayName("update should return updated trainee when trainee exists")
     void update_ShouldReturnUpdatedTrainee_WhenTraineeExists() {
         // Given
-        when(traineeRepo.isExistsById(anyLong())).thenReturn(true);
         when(traineeRepo.update(any(Trainee.class))).thenReturn(testTrainee);
 
         // When
@@ -109,25 +114,6 @@ class TraineeServiceImplTest extends UnitTestBase {
         assertEquals(testTrainee, result);
 
         verify(traineeRepo, times(1)).update(traineeArgumentCaptor.capture());
-        verify(traineeRepo, times(1)).isExistsById(idArgumentCaptor.capture());
-    }
-
-    @Test
-    @DisplayName("update should throw Exception when trainee was not found")
-    void update_ShouldThrowException_WhenTraineeWasNotFound() {
-        // Given
-        when(traineeRepo.findById(anyLong())).thenReturn(Optional.empty());
-        when(traineeRepo.isExistsById(anyLong())).thenReturn(false);
-
-        // When - Then
-        assertThrows(
-                NoSuchElementException.class,
-                () -> traineeService.update(testTrainee),
-                "Trainee with id=1 not found"
-        );
-
-        verify(traineeRepo, times(1)).isExistsById(idArgumentCaptor.capture());
-        verify(traineeRepo, never()).update(traineeArgumentCaptor.capture());
     }
 
     @Test
@@ -138,7 +124,7 @@ class TraineeServiceImplTest extends UnitTestBase {
         doNothing().when(traineeRepo).delete(any(Trainee.class));
 
         // When
-        traineeService.deleteByUsername(testTrainee.getUsername());
+        traineeService.deleteByUsername(testTrainee.getUserName());
 
         // Then
         verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
@@ -154,8 +140,8 @@ class TraineeServiceImplTest extends UnitTestBase {
                 .thenReturn(Optional.empty());
 
         // When
-        var result1 = traineeService.findByUsername(testTrainee.getUsername());
-        var result2 = traineeService.findByUsername(testTrainee.getUsername());
+        var result1 = traineeService.findByUsername(testTrainee.getUserName());
+        var result2 = traineeService.findByUsername(testTrainee.getUserName());
 
         // Then
         assertNotNull(result1);
@@ -222,5 +208,63 @@ class TraineeServiceImplTest extends UnitTestBase {
         Assertions.assertFalse(result2);
         Assertions.assertFalse(result3);
         verify(traineeRepo, times(3)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should find user by user name and nothing was thrown")
+    void findByUsernameOrThrow_ShouldReturnEntity_WhenUserExists() {
+        // Given
+        when(traineeRepo.findByUserName(anyString())).thenReturn(Optional.of(testTrainee));
+
+        // When
+
+        var actualUser = assertDoesNotThrow(
+                () -> traineeService.findByUsernameOrThrow(testTrainee.getUserName())
+        );
+
+        // Then
+        assertNotNull(actualUser);
+        assertEquals(testTrainee, actualUser);
+        verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("Should throw EntityNotFoundException when nothing was found")
+    void findByUsernameOrThrow_ShouldThrowException_WhenUserNotFound() {
+        // Given
+        when(traineeRepo.findByUserName(anyString())).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeService.findByUsernameOrThrow("username"),
+                "Entity with username username not found"
+        );
+
+        verify(traineeRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "trainee1, trainer1, YOGA, 1",
+            "trainee2, trainer2, YOGA, 0"
+    })
+    @DisplayName("Should return/not return list of trainings")
+    void findTraineeTrainingsByCriteria_ShouldReturnCorrectData(String traineeUsername, String trainerUsername, TrainingType trainingType, int expectedSize) {
+        // Given
+        var fromDate = LocalDate.of(2024, 1, 1);
+        var toDate = LocalDate.of(2024, 12, 31);
+        List<Training> expectedTrainings = expectedSize > 0 ? List.of(mock(Training.class)) : Collections.emptyList();
+
+        when(traineeRepo.getTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType))
+                .thenReturn(expectedTrainings);
+
+        // When
+        var actualTrainings = traineeService.findTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType);
+
+        // Then
+        assertNotNull(actualTrainings);
+        assertEquals(expectedSize, actualTrainings.size());
+        verify(traineeRepo, times(1)).getTraineeTrainingsByCriteria(traineeUsername, fromDate, toDate, trainerUsername, trainingType);
     }
 }

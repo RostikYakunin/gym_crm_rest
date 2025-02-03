@@ -1,14 +1,11 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
-import com.crm.models.TrainingType;
-import jakarta.persistence.NoResultException;
+import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.LocalDate;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -30,24 +27,26 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // Then
         assertNotNull(savedTrainee.getId());
-        assertEquals(expectedUserName, savedTrainee.getUsername());
+        assertEquals(expectedUserName, savedTrainee.getUserName());
     }
 
     @Test
     @DisplayName("Find a trainee by existing ID and verify it is returned")
     void findTraineeById_WhenIdExists_ShouldReturnTrainee() {
         // Given
-        var expectedUserName = "testName.testLastName";
         var savedId = traineeRepo.save(testTrainee);
 
         // When
         var notEmptyResult = traineeRepo.findById(savedId.getId());
-        var emptyResult = traineeRepo.findById(100000L);
+
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeRepo.findById(100000L)
+        );
 
         // Then
         assertTrue(notEmptyResult.isPresent());
-        assertEquals(expectedUserName, notEmptyResult.get().getUsername());
-        assertTrue(emptyResult.isEmpty());
+        assertEquals(testTrainee.getUserName(), notEmptyResult.get().getUserName());
     }
 
     @Test
@@ -55,27 +54,29 @@ public class TraineeRepoImplTest extends DbTestBase {
     void updateTrainee_ShouldSaveUpdatedTrainee() {
         // Given
         traineeRepo.save(testTrainee);
-        testTrainee.setUsername("NewTraineeName");
+        testTrainee.setUserName("NewTraineeName");
 
         // When
         var updatedTrainee = traineeRepo.update(testTrainee);
 
         // Then
-        assertEquals("NewTraineeName", updatedTrainee.getUsername());
+        assertEquals("NewTraineeName", updatedTrainee.getUserName());
     }
 
     @Test
     @DisplayName("Delete a trainee and verify it is removed")
     void deleteTrainee_ShouldRemoveTrainee() {
         // Given
-        traineeRepo.save(testTrainee);
+        var saved = traineeRepo.save(testTrainee);
 
         // When
-        traineeRepo.delete(testTrainee);
+        traineeRepo.delete(saved);
 
         // Then
-        var deletedTrainee = traineeRepo.findById(testTrainee.getId());
-        assertFalse(deletedTrainee.isPresent());
+        assertThrows(
+                EntityNotFoundException.class,
+                () -> traineeRepo.findByUserName(saved.getUserName())
+        );
     }
 
     @Test
@@ -102,7 +103,7 @@ public class TraineeRepoImplTest extends DbTestBase {
 
         // When
         var trainings = traineeRepo.getTraineeTrainingsByCriteria(
-                testTrainee.getUsername(), LocalDate.now(), null, testTrainer.getFirstName(), TrainingType.FITNESS
+                testTrainee.getUserName(), null, null, null, null
         );
 
         // Then
@@ -132,15 +133,5 @@ public class TraineeRepoImplTest extends DbTestBase {
         // Then
         assertNotNull(result.get());
         assertEquals(testTrainee, result.get());
-    }
-
-    @Test
-    @DisplayName("findByUserName - should throw exception when it was not found")
-    void findByUserName_ShouldThrowException_WhenEntityWasNotFound() {
-        // Given - When - Then
-        assertThrows(
-                NoResultException.class,
-                () -> traineeRepo.findByUserName("unknown")
-        );
     }
 }

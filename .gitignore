@@ -4,6 +4,8 @@ build/
 !**/src/main/**/build/
 !**/src/test/**/build/
 .idea
+tomcat.8080
+db-data
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -42,4 +44,4 @@ bin/
 ### Mac OS ###
 .DS_Store
 /.idea/
-/.idea/
+/db-data/

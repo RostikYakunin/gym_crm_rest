@@ -5,6 +5,8 @@ public interface UserService<T> {
 
     T findByUsername(String username);
 
+    T findByUsernameOrThrow(String userName);
+
     T save(T entity);
 
     T update(T entity);

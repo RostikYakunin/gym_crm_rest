@@ -2,31 +2,31 @@
   {
     "firstName": "Alice",
     "lastName": "Johnson",
-    "password": "sj23jkshdw",
+    "password": "sj2Kjkshdw",
     "specialization": "FITNESS"
   },
   {
     "firstName": "Bob",
     "lastName": "Miller",
-    "password": "sjdf36shdw",
+    "password": "sjKf36shdw",
     "specialization": "YOGA"
   },
   {
     "firstName": "Laura",
     "lastName": "Taylor",
-    "password": "sjdfjkshdw",
+    "password": "sjdKjkshdw",
     "specialization": "ZUMBA"
   },
   {
     "firstName": "David",
     "lastName": "Anderson",
-    "password": "sjd123shdw",
+    "password": "sjK123shdw",
     "specialization": "STRETCHING"
   },
   {
     "firstName": "Sarah",
     "lastName": "Thomas",
-    "password": "sjdfjk567w",
+    "password": "sjKfjk567w",
     "specialization": "RESISTANCE"
   }
 ]

@@ -24,22 +24,51 @@ public class TraineeRepoImpl extends AbstractUserRepo<Trainee> implements Traine
     }
 
     @Override
-    public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
-        var jpql = """
-                SELECT t FROM Training t
-                WHERE t.trainee.username = :traineeUsername
-                AND (:fromDate IS NULL OR t.trainingDate >= :fromDate)
-                AND (:toDate IS NULL OR t.trainingDate <= :toDate)
-                AND (:trainerName IS NULL OR t.trainer.firstName LIKE CONCAT('%', :trainerName, '%') OR t.trainer.lastName LIKE CONCAT('%', :trainerName, '%'))
-                AND (:trainingType IS NULL OR t.trainingType = :trainingType)
-                """;
+    public void delete(Trainee trainee) {
+        log.debug("Start deleting entity...");
+        if (!trainee.getTrainings().isEmpty()) {
+            entityManager.createQuery("DELETE FROM Training t WHERE t.trainee.id = :traineeId")
+                    .setParameter("traineeId", trainee.getId())
+                    .executeUpdate();
+        }
 
-        var query = entityManager.createQuery(jpql, Training.class);
+        entityManager.createQuery("DELETE FROM Trainee t WHERE t.id = :traineeId")
+                .setParameter("traineeId", trainee.getId())
+                .executeUpdate();
+    }
+
+    @Override
+    public List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType) {
+        var dynamicJpqlQuery = "SELECT t FROM Training t WHERE t.trainee.userName = :traineeUsername";
+
+        if (fromDate != null) {
+            dynamicJpqlQuery += " AND t.trainingDate >= :fromDate";
+        }
+        if (toDate != null) {
+            dynamicJpqlQuery += " AND t.trainingDate <= :toDate";
+        }
+        if (trainerUserName != null && !trainerUserName.isEmpty()) {
+            dynamicJpqlQuery += " AND t.trainer.userName = :trainerUserName";
+        }
+        if (trainingType != null) {
+            dynamicJpqlQuery += " AND t.trainingType = :trainingType";
+        }
+
+        var query = entityManager.createQuery(dynamicJpqlQuery, Training.class);
         query.setParameter("traineeUsername", traineeUsername);
-        query.setParameter("fromDate", fromDate != null ? fromDate.atStartOfDay() : null);
-        query.setParameter("toDate", toDate != null ? toDate.atTime(23, 59, 59) : null);
-        query.setParameter("trainerName", trainerUserName);
-        query.setParameter("trainingType", trainingType);
+
+        if (fromDate != null) {
+            query.setParameter("fromDate", fromDate);
+        }
+        if (toDate != null) {
+            query.setParameter("toDate", toDate);
+        }
+        if (trainerUserName != null && !trainerUserName.isEmpty()) {
+            query.setParameter("trainerUserName", trainerUserName);
+        }
+        if (trainingType != null) {
+            query.setParameter("trainingType", trainingType);
+        }
 
         return query.getResultList();
     }
