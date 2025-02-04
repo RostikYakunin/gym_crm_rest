@@ -13,6 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +25,7 @@ import java.time.LocalDateTime;
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
+@DirtiesContext
 public abstract class DbTestBase {
     // repos
     @Autowired

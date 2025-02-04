@@ -71,7 +71,7 @@ public class TrainerServiceImpl implements TrainerService {
         );
 
         if (isExists) {
-            throw new IllegalStateException("Trainee is already registered in the system.");
+            throw new IllegalArgumentException("You can not be registered as a trainer and trainee simultaneously!");
         }
 
         log.info("Starting saving trainer with first name: {}", entity.getFirstName());

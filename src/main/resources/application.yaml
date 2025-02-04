@@ -26,7 +26,6 @@ spring:
       file: ./docker-compose.yaml
       stop:
         timeout: 10s
-
   jackson:
     serialization:
       indent_output: true

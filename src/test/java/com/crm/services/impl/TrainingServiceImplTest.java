@@ -1,6 +1,8 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
+import com.crm.dtos.training.TrainingDto;
+import com.crm.dtos.training.TrainingView;
 import com.crm.repositories.TrainingRepo;
 import com.crm.repositories.entities.Training;
 import org.junit.jupiter.api.AfterEach;
@@ -9,6 +11,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.core.convert.ConversionService;
 
 import java.util.Optional;
 
@@ -18,10 +21,10 @@ import static org.mockito.Mockito.*;
 class TrainingServiceImplTest extends UnitTestBase {
     @Mock
     private TrainingRepo trainingRepo;
-
+    @Mock
+    private ConversionService conversionService;
     @InjectMocks
     private TrainingServiceImpl trainingService;
-
     private Training testTraining;
 
     @BeforeEach
@@ -61,6 +64,22 @@ class TrainingServiceImplTest extends UnitTestBase {
 
         // Then
         assertEquals(testTraining, result);
+        verify(trainingRepo, times(1)).save(testTraining);
+    }
+
+    @Test
+    @DisplayName("addTraining - should persist training and return it view")
+    void addTraining_ShouldPersistTrainingAndReturnItView() {
+        // Given
+        when(conversionService.convert(any(TrainingDto.class), eq(Training.class))).thenReturn(testTraining);
+        when(trainingRepo.save(testTraining)).thenReturn(testTraining);
+        when(conversionService.convert(any(Training.class), eq(TrainingView.class))).thenReturn(new TrainingView());
+
+        // When
+        var result = trainingService.addTraining(new TrainingDto());
+
+        // Then
+        assertEquals(new TrainingView(), result);
         verify(trainingRepo, times(1)).save(testTraining);
     }
 }

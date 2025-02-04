@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://stg-db-server:5432/stg_db
+    url: jdbc:postgresql://localhost:5432/stg_db
     username: stg_user
     password: stg_pass
     driver-class-name: org.postgresql.Driver
