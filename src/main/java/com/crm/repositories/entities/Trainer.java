@@ -1,11 +1,8 @@
 package com.crm.repositories.entities;
 
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -19,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "trainers")
 @DynamicUpdate
+@ToString(exclude = "trainings")
 public class Trainer extends User {
     @Enumerated(EnumType.STRING)
     @Column(name = "specialization", nullable = false)

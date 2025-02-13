@@ -1,22 +1,19 @@
 package com.crm.converters;
 
+import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.training.TrainingView;
 import com.crm.repositories.entities.Training;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class TrainingToTrainingViewConverter implements Converter<Training, TrainingView> {
+    private final TrainingMapper trainingMapper;
+
     @Override
     public TrainingView convert(Training source) {
-        return new TrainingView(
-                source.getId(),
-                source.getTrainee() != null ? source.getTrainee().getId() : null,
-                source.getTrainer() != null ? source.getTrainer().getId() : null,
-                source.getTrainingName(),
-                source.getTrainingType(),
-                source.getTrainingDate(),
-                source.getTrainingDuration()
-        );
+        return trainingMapper.toTrainingView(source);
     }
 }

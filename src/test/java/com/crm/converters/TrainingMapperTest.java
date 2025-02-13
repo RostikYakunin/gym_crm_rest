@@ -2,7 +2,7 @@ package com.crm.converters;
 
 import com.crm.converters.mappers.TrainingMapper;
 import com.crm.dtos.training.TrainingDto;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;

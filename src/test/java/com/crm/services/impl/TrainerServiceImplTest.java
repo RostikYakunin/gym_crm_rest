@@ -1,7 +1,13 @@
 package com.crm.services.impl;
 
 import com.crm.UnitTestBase;
-import com.crm.models.TrainingType;
+import com.crm.dtos.UserLoginDto;
+import com.crm.dtos.trainer.TrainerDto;
+import com.crm.dtos.trainer.TrainerView;
+import com.crm.dtos.training.TrainingView;
+import com.crm.enums.TrainingType;
+import com.crm.exceptions.PasswordNotMatchException;
+import com.crm.exceptions.UserNameChangedException;
 import com.crm.repositories.TrainerRepo;
 import com.crm.repositories.entities.Trainer;
 import com.crm.repositories.entities.Training;
@@ -15,6 +21,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.springframework.core.convert.ConversionService;
 
 import java.time.LocalDate;
 import java.util.Collections;
@@ -27,6 +34,8 @@ import static org.mockito.Mockito.*;
 class TrainerServiceImplTest extends UnitTestBase {
     @Mock
     private TrainerRepo trainerRepo;
+    @Mock
+    private ConversionService conversionService;
 
     @Captor
     ArgumentCaptor<String> stringArgumentCaptor;
@@ -90,14 +99,14 @@ class TrainerServiceImplTest extends UnitTestBase {
     @DisplayName("update should update trainer if exists")
     void update_ShouldUpdateTrainer_IfExists() {
         // Given
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
 
         // When
         var result = trainerService.update(testTrainer);
 
         // Then
         assertEquals(testTrainer, result);
-        verify(trainerRepo, times(1)).update(trainerArgumentCaptor.capture());
+        verify(trainerRepo, times(1)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -124,18 +133,25 @@ class TrainerServiceImplTest extends UnitTestBase {
     @DisplayName("changePassword - should change/don`t change password when trainee`s password matches/don`t matches with found in DB")
     void changePassword_ShouldChangePass_WhenPasswordsMatches() {
         // Given
-        var initialPassword = testTrainer.getPassword();
-        testTrainer.setPassword(UserUtils.hashPassword(initialPassword));
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.ofNullable(testTrainer));
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
+        testTrainer.setPassword(UserUtils.hashPassword(testTrainer.getPassword()));
 
-        // When
-        var result1 = trainerService.changePassword(testTrainer, initialPassword, "newPass");
-        var result2 = trainerService.changePassword(testTrainer, "wrong", "newPass");
+        // When - Then
+        assertThrows(
+                PasswordNotMatchException.class,
+                () -> trainerService.changePassword(
+                        new UserLoginDto(testTrainer.getUserName(), "wrongPass", "newPass")
+                )
+        );
 
-        // Then
-        assertTrue(result1);
-        assertFalse(result2);
-        verify(trainerRepo, times(1)).update(trainerArgumentCaptor.capture());
+        assertDoesNotThrow(
+                () -> trainerService.changePassword(
+                        new UserLoginDto(testTrainer.getUserName(), "Pasw3456", "newPass")
+                )
+        );
+
+        verify(trainerRepo, times(1)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -143,7 +159,7 @@ class TrainerServiceImplTest extends UnitTestBase {
     void toggleActiveStatus_ShouldDeactivateWhenCurrentlyActive() {
         // Given
         when(trainerRepo.findById(anyLong())).thenReturn(Optional.of(testTrainer));
-        when(trainerRepo.update(any(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
 
         // When
         var result1 = trainerService.activateStatus(1L);
@@ -154,7 +170,7 @@ class TrainerServiceImplTest extends UnitTestBase {
         assertFalse(result2);
 
         verify(trainerRepo, times(2)).findById(1L);
-        verify(trainerRepo, times(2)).update(trainerArgumentCaptor.capture());
+        verify(trainerRepo, times(2)).save(trainerArgumentCaptor.capture());
     }
 
     @Test
@@ -215,18 +231,18 @@ class TrainerServiceImplTest extends UnitTestBase {
 
     @ParameterizedTest
     @CsvSource({
-            "trainee1, 2",
+            "trainee1, 1",
             "trainee2, 0"
     })
     @DisplayName("Should return/not return list of assigned trainers")
     void getUnassignedTrainersByTraineeUsername_ShouldReturnCorrectData(String traineeUsername, int expectedSize) {
         // Given
         List<Trainer> expectedTrainers = expectedSize > 0 ? List.of(mock(Trainer.class), mock(Trainer.class)) : Collections.emptyList();
-
         when(trainerRepo.getUnassignedTrainersByTraineeUsername(traineeUsername)).thenReturn(expectedTrainers);
+        lenient().when(conversionService.convert(any(Trainer.class), eq(TrainerDto.class))).thenReturn(new TrainerDto());
 
         // When
-        var actualTrainers = trainerService.getUnassignedTrainersByTraineeUsername(traineeUsername);
+        var actualTrainers = trainerService.findNotAssignedTrainersByTraineeUserName(traineeUsername);
 
         // Then
         assertNotNull(actualTrainers);
@@ -246,6 +262,7 @@ class TrainerServiceImplTest extends UnitTestBase {
         var toDate = LocalDate.of(2024, 12, 31);
         List<Training> expectedTrainings = expectedSize > 0 ? List.of(mock(Training.class)) : Collections.emptyList();
 
+        lenient().when(conversionService.convert(any(Training.class), eq(TrainingView.class))).thenReturn(new TrainingView());
         when(trainerRepo.getTrainerTrainingsByCriteria(trainerUsername, fromDate, toDate, traineeUsername, trainingType))
                 .thenReturn(expectedTrainings);
 
@@ -256,5 +273,72 @@ class TrainerServiceImplTest extends UnitTestBase {
         assertNotNull(actualTrainings);
         assertEquals(expectedSize, actualTrainings.size());
         verify(trainerRepo, times(1)).getTrainerTrainingsByCriteria(trainerUsername, fromDate, toDate, traineeUsername, trainingType);
+    }
+
+    @Test
+    @DisplayName("addTrainer - should save trainee and return it")
+    void addTrainer_ShouldSave_AndReturnIt() {
+        // Given
+        var trainerDto = TrainerDto.builder().userName(testTrainer.getUserName()).build();
+        when(conversionService.convert(any(TrainerDto.class), eq(Trainer.class))).thenReturn(testTrainer);
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
+        when(conversionService.convert(any(Trainer.class), eq(TrainerDto.class))).thenReturn(trainerDto);
+
+        // When
+        var result = trainerService.addTrainer(new TrainerDto());
+
+        // Then
+        assertEquals(testTrainer.getUserName(), result.getUserName());
+        verify(trainerRepo, times(1)).save(trainerArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("findProfileByUserName - should find trainee and return it")
+    void findProfileByUserName_ShouldFind_AndReturnIt() {
+        // Given
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.ofNullable(testTrainer));
+        when(conversionService.convert(any(Trainer.class), eq(TrainerView.class))).thenReturn(new TrainerView());
+
+        // When
+        var result = trainerService.findProfileByUserName("username");
+
+        // Then
+        assertNotNull(result);
+        verify(trainerRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("updateTraineeProfile - should update trainee`s profile and return it")
+    void updateTraineeProfile_shouldUpdateTrainee_ThenReturnIt() {
+        // Given
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.ofNullable(testTrainer));
+        when(trainerRepo.save(any(Trainer.class))).thenReturn(testTrainer);
+        when(conversionService.convert(any(TrainerDto.class), eq(Trainer.class))).thenReturn(testTrainer);
+        when(conversionService.convert(any(Trainer.class), eq(TrainerView.class))).thenReturn(new TrainerView());
+        var trainerDto = TrainerDto.builder().userName(testTrainer.getUserName()).build();
+
+        // When
+        var result = trainerService.updateTrainerProfile(1L, trainerDto);
+
+        // Then
+        assertNotNull(result);
+        verify(trainerRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
+    }
+
+    @Test
+    @DisplayName("updateTraineeProfile - should throw Exception")
+    void updateTraineeProfile_shouldThrowException() {
+        // Given
+        when(trainerRepo.findByUserName(anyString())).thenReturn(Optional.ofNullable(testTrainer));
+        var trainerDto = TrainerDto.builder().userName("username").build();
+
+        // When - Then
+        assertThrows(
+                UserNameChangedException.class,
+                () -> trainerService.updateTrainerProfile(1L, trainerDto),
+                "User name changing is forbidden!"
+        );
+
+        verify(trainerRepo, times(1)).findByUserName(stringArgumentCaptor.capture());
     }
 }

@@ -1,12 +1,17 @@
 package com.crm.repositories;
 
-import com.crm.models.TrainingType;
 import com.crm.repositories.entities.Trainee;
-import com.crm.repositories.entities.Training;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
-import java.time.LocalDate;
-import java.util.List;
+import java.util.Optional;
 
-public interface TraineeRepo extends UserRepo<Trainee> {
-    List<Training> getTraineeTrainingsByCriteria(String traineeUsername, LocalDate fromDate, LocalDate toDate, String trainerUserName, TrainingType trainingType);
+public interface TraineeRepo extends JpaRepository<Trainee, Long>, CustomTraineeRepo {
+    Optional<Trainee> findByUserName(String userName);
+
+    boolean existsByUserName(String userName);
+
+    @Query("SELECT COUNT(t) > 0 FROM Trainer t WHERE t.firstName = :firstName AND t.lastName = :lastName")
+    boolean existsTrainerByFirstAndLastName(@Param("firstName") String firstName, @Param("lastName") String lastName);
 }

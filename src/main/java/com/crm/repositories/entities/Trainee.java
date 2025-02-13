@@ -1,10 +1,7 @@
 package com.crm.repositories.entities;
 
 import jakarta.persistence.*;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.DynamicUpdate;
 
@@ -19,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "trainees")
 @DynamicUpdate
+@ToString(exclude = "trainings")
 public class Trainee extends User {
     @Column(name = "date_of_birth")
     private LocalDate dateOfBirth;

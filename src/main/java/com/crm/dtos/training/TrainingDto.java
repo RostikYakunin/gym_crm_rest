@@ -1,6 +1,6 @@
 package com.crm.dtos.training;
 
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import com.crm.repositories.entities.Trainee;
 import com.crm.repositories.entities.Trainer;
 import jakarta.validation.constraints.Future;

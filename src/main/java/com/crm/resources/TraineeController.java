@@ -6,15 +6,12 @@ import com.crm.dtos.trainee.TraineeDto;
 import com.crm.dtos.trainee.TraineeTrainingUpdateDto;
 import com.crm.dtos.trainee.TraineeView;
 import com.crm.dtos.training.TrainingView;
-import com.crm.converters.mappers.TraineeMapper;
-import com.crm.converters.mappers.TrainingMapper;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import com.crm.services.TraineeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -24,7 +21,6 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDate;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/trainee")
@@ -32,8 +28,6 @@ import java.util.stream.Collectors;
 @Tag(name = "REST API for Trainee", description = "Provides resource methods for managing trainees")
 public class TraineeController {
     private final TraineeService traineeService;
-    private final TraineeMapper traineeMapper;
-    private final TrainingMapper trainingMapper;
 
     @Operation(
             summary = "Register a new trainee",
@@ -51,11 +45,7 @@ public class TraineeController {
     )
     @PostMapping
     public ResponseEntity<TraineeDto> registerTrainee(@RequestBody @Valid TraineeDto traineeDto) {
-        var trainee = traineeMapper.toTrainee(traineeDto);
-        var savedTrainee = traineeService.save(trainee);
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(traineeMapper.toDto(savedTrainee));
+        return ResponseEntity.status(HttpStatus.CREATED).body(traineeService.addTrainee(traineeDto));
     }
 
     @Operation(
@@ -74,16 +64,8 @@ public class TraineeController {
     )
     @PutMapping("/password")
     public ResponseEntity<String> changePassword(@RequestBody @Valid UserLoginDto loginDto) {
-        var foundTrainee = traineeService.findByUsernameOrThrow(loginDto.getUserName());
-        var result = traineeService.changePassword(
-                foundTrainee,
-                loginDto.getOldPassword(),
-                loginDto.getNewPassword()
-        );
-
-        return result
-                ? ResponseEntity.ok("Password successfully changed")
-                : ResponseEntity.badRequest().body("Password was not changed: inputted password is wrong");
+        traineeService.changePassword(loginDto);
+        return ResponseEntity.ok("Password successfully changed");
     }
 
     @Operation(
@@ -101,9 +83,8 @@ public class TraineeController {
             }
     )
     @GetMapping("/{username}")
-    public ResponseEntity<TraineeView> getTraineeProfile(@PathVariable("username") String username) {
-        var foundTrainee = traineeService.findByUsernameOrThrow(username);
-        return ResponseEntity.ok(traineeMapper.toTraineeView(foundTrainee));
+    public ResponseEntity<TraineeView> findTraineeProfile(@PathVariable("username") String username) {
+        return ResponseEntity.ok(traineeService.findProfileByUserName(username));
     }
 
     @Operation(
@@ -126,20 +107,7 @@ public class TraineeController {
             @PathVariable("id") Long id,
             @RequestBody @Valid TraineeDto updateDto
     ) {
-        var existingTrainee = Optional.ofNullable(traineeService.findById(id))
-                .orElseThrow(() -> new EntityNotFoundException("Trainee with user name=" + updateDto.getUserName() + " not found."));
-
-        if (!existingTrainee.getUserName().equals(updateDto.getUserName())) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        var fromDto = traineeMapper.toTrainee(updateDto);
-        traineeMapper.updateTrainee(existingTrainee, fromDto);
-
-        var updatedTrainee = traineeService.update(existingTrainee);
-        return updatedTrainee != null
-                ? ResponseEntity.ok(traineeMapper.toTraineeView(updatedTrainee))
-                : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(traineeService.updateTraineeProfile(id, updateDto));
     }
 
     @Operation(
@@ -181,19 +149,7 @@ public class TraineeController {
     )
     @PutMapping("/trainings")
     public ResponseEntity<Set<TrainingView>> updateTraineeTrainings(@RequestBody @Valid TraineeTrainingUpdateDto updateDto) {
-        var newTrainings = updateDto.getTrainings()
-                .stream()
-                .map(trainingMapper::toTraining)
-                .collect(Collectors.toSet());
-
-        var updatedTrainee = traineeService.updateTraineeTrainings(updateDto.getUserName(), newTrainings);
-        return ResponseEntity.ok(
-                traineeService.update(updatedTrainee)
-                        .getTrainings()
-                        .stream()
-                        .map(trainingMapper::toTrainingView)
-                        .collect(Collectors.toSet())
-        );
+        return ResponseEntity.ok(traineeService.updateTraineeTrainings(updateDto));
     }
 
     @Operation(
@@ -224,15 +180,12 @@ public class TraineeController {
     ) {
         return ResponseEntity.ok(
                 traineeService.findTraineeTrainingsByCriteria(
-                                username,
-                                periodFrom,
-                                periodTo,
-                                trainerUserName,
-                                trainingType != null ? TrainingType.valueOf(trainingType) : null
-                        )
-                        .stream()
-                        .map(trainingMapper::toTrainingView)
-                        .collect(Collectors.toSet())
+                        username,
+                        periodFrom,
+                        periodTo,
+                        trainerUserName,
+                        Optional.ofNullable(trainingType).map(TrainingType::valueOf).orElse(null)
+                )
         );
     }
 

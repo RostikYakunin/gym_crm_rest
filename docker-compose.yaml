@@ -3,7 +3,7 @@ version: '3.9'
 services:
   db:
     image: postgres:15-bullseye
-    container_name: database
+    container_name: crm_database
     restart: unless-stopped
     env_file: .env
     environment:
@@ -16,22 +16,23 @@ services:
     volumes:
       - ./db-data:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD","pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 5s
       timeout: 5s
-      retries: 5
+      retries: 10
     networks:
       crm_network:
 
   adminer:
     image: adminer:latest
-    container_name: adminer
+    container_name: crm_adminer
     restart: unless-stopped
     env_file: .env
     ports:
-      - "8081:8080"
+      - "${ADMINER_PORT}:${APP_PORT}"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     networks:
       crm_network:
 

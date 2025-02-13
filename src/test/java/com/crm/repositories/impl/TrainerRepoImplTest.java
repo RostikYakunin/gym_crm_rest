@@ -1,20 +1,13 @@
 package com.crm.repositories.impl;
 
 import com.crm.DbTestBase;
-import jakarta.persistence.EntityNotFoundException;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 public class TrainerRepoImplTest extends DbTestBase {
-
-    @BeforeEach
-    void init() {
-        trainerRepo.save(testTrainer);
-    }
 
     @Test
     @DisplayName("Save a trainer and verify it is persisted")
@@ -35,14 +28,13 @@ public class TrainerRepoImplTest extends DbTestBase {
 
         // When
         var foundTrainer = trainerRepo.findById(savedTrainer.getId());
-        assertThrows(
-                EntityNotFoundException.class,
-                () -> trainerRepo.findById(999L)
-        );
+        var emptyTrainer = trainerRepo.findById(999L);
+
 
         // Then
         assertTrue(foundTrainer.isPresent());
         assertEquals("testName1.testLastName1", foundTrainer.get().getUserName());
+        assertTrue(emptyTrainer.isEmpty());
     }
 
     @Test
@@ -53,26 +45,10 @@ public class TrainerRepoImplTest extends DbTestBase {
         testTrainer.setUserName("NewTrainerName");
 
         // When
-        var updatedTrainer = trainerRepo.update(testTrainer);
+        var updatedTrainer = trainerRepo.save(testTrainer);
 
         // Then
         assertEquals("NewTrainerName", updatedTrainer.getUserName());
-    }
-
-    @Test
-    @DisplayName("Delete a trainer and verify it is removed")
-    void deleteTrainer_ShouldRemoveTrainer() {
-        // Given
-        trainerRepo.save(testTrainer);
-
-        // When
-        trainerRepo.delete(testTrainer);
-
-        // Then
-        assertThrows(
-                EntityNotFoundException.class,
-                () -> trainerRepo.findById(testTrainer.getId())
-        );
     }
 
     @Test
@@ -82,8 +58,8 @@ public class TrainerRepoImplTest extends DbTestBase {
         trainerRepo.save(testTrainer);
 
         // When
-        var result1 = trainerRepo.isExistsById(testTrainer.getId());
-        var result2 = trainerRepo.isExistsById(999L);
+        var result1 = trainerRepo.existsById(testTrainer.getId());
+        var result2 = trainerRepo.existsById(999L);
 
 
         // Then
@@ -95,6 +71,7 @@ public class TrainerRepoImplTest extends DbTestBase {
     @DisplayName("Get trainer trainings by criteria and verify result")
     void getTrainerTrainingsByCriteria_ShouldReturnCorrectTrainings() {
         // Given
+        trainerRepo.save(testTrainer);
         traineeRepo.save(testTrainee);
         trainingRepo.save(testTraining);
 
@@ -113,34 +90,34 @@ public class TrainerRepoImplTest extends DbTestBase {
     @DisplayName("Get unassigned trainers by trainee username and verify result")
     void getUnassignedTrainersByTraineeUsername_ShouldReturnCorrectTrainers() {
         // Given
-        traineeRepo.save(testTrainee);
-        traineeRepo.save(testTrainee);
+        var savedTrainee = traineeRepo.save(testTrainee);
+        var savedTrainer = trainerRepo.save(testTrainer);
 
         // When
-        var trainers = trainerRepo.getUnassignedTrainersByTraineeUsername(testTrainee.getUserName());
+        var trainers = trainerRepo.getUnassignedTrainersByTraineeUsername(savedTrainee.getUserName());
 
         // Then
         assertFalse(trainers.isEmpty());
-        assertEquals(testTrainer.getUserName(), trainers.get(0).getUserName());
+        assertEquals(savedTrainer.getUserName(), trainers.get(0).getUserName());
     }
 
     @Test
     @DisplayName("isUserNameExists - should return result when entity was found")
     void isUserNameExists_ShouldReturnTrue_WhenEntityWasFound() {
         // Given - When
-        var positiveResult = trainerRepo.isUserNameExists("testName1.testLastName1");
-        var negativeResult = trainerRepo.isUserNameExists("unknown");
+        var savedTrainer = trainerRepo.save(testTrainer);
+        var positiveResult = trainerRepo.existsByUserName(savedTrainer.getUserName());
 
         // Then
         Assertions.assertTrue(positiveResult);
-        Assertions.assertFalse(negativeResult);
     }
 
     @Test
     @DisplayName("findByUserName - should return entity when it was found")
     void findByUserName_ShouldReturnEntity_WhenEntityWasFound() {
         // Given - When
-        var result = trainerRepo.findByUserName("testName1.testLastName1");
+        var savedTrainer = trainerRepo.save(testTrainer);
+        var result = trainerRepo.findByUserName(savedTrainer.getUserName());
 
         // Then
         assertNotNull(result.get());

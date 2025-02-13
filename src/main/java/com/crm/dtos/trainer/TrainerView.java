@@ -1,7 +1,7 @@
 package com.crm.dtos.trainer;
 
 import com.crm.dtos.training.TrainingView;
-import com.crm.models.TrainingType;
+import com.crm.enums.TrainingType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
